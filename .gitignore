@@ -1,0 +1,28 @@
+# Directories
+**/.DS_Store
+**/.vercel
+**/site
+**/bin
+**/dist
+**/build
+**/node_modules
+**/coverage
+**/out
+**/public
+**/tmp
+**/.cache
+**/.turbo
+**/.vercel
+
+# Files
+**/.dccache
+**/*.env
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/*.zip
+**/*.tar.gz
+**/*.tgz
+**/*.log
+**/*.bun
+
