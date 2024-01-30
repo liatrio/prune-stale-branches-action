@@ -3,6 +3,7 @@
   "type": "module",
   "module": "src/index.ts",
   "dependencies": {
+    "@octokit/rest": "^20.0.2",
     "@slack/bolt": "^3.17.1"
   },
   "devDependencies": {
