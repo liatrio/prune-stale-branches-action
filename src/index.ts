@@ -90,6 +90,16 @@ async function getFlaggedBranchesConcurrently(input: {
   return flaggedBranches
 }
 
+/**
+ * Gets all of the repositories for the given owner and owner type, then gets all of the branches
+ * for each repository and their latest commit. It then calculates the age of each branch and flags
+ * it for deletion if it is older than the given number of months. If the branch is flagged, it is
+ * added to an array of flagged branches that is then returned.
+ *
+ * @param input All of the command inputs.
+ *
+ * @returns An array of objects containing the repositories, branches, and their ages.
+ */
 async function getFlaggedBranches(input: {
   /** The GitHub token to use for authentication. */
   token: string
@@ -133,10 +143,10 @@ async function getFlaggedBranches(input: {
 
             logger.debug(`Branch age: ${branchAge} months`, 'index#commandAction')
 
-            if (branchAge > 6) {
+            if (branchAge > input.minimumMonths) {
               flaggedBranches.push({
-                repo: repo.name,
-                branch: branch.branch.name,
+                repoName: repo.name,
+                branchName: branch.branch.name,
                 branchAge,
               })
             }
