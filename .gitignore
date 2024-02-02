@@ -13,6 +13,7 @@
 **/.cache
 **/.turbo
 **/.vercel
+**/logs
 
 # Files
 **/.dccache
