@@ -1,5 +1,6 @@
+import { getOctokit } from '@actions/github'
+import { GitHub } from '@actions/github/lib/utils'
 import { composePaginateRest, paginateRest } from '@octokit/plugin-paginate-rest'
-import { Octokit } from '@octokit/rest'
 import { type Endpoints } from '@octokit/types'
 import { logger } from './Logger'
 
@@ -19,20 +20,18 @@ export type ReposResponse = Endpoints['GET /orgs/{org}/repos']['response']['data
  * A class with a few utility methods that simplify interacting with the GitHub REST API and the
  * data it returns.
  */
-export class GitHub {
-  private gh: Octokit
+export class GitHubUtil {
+  private gh: InstanceType<typeof GitHub>
 
   /**
    * Create a new instance of the {@link GitHub} class with the given {@link token} and creates a
-   * new instance of the {@link Octokit} class with the {@link paginateRest} and
+   * new instance of the `Octokit` class with the {@link paginateRest} and
    * {@link composePaginateRest} plugins.
    *
    * @param token The GitHub token to use for authentication.
    */
   public constructor(token: string) {
-    const PluggedOctokit = Octokit.plugin(paginateRest, composePaginateRest)
-
-    this.gh = new PluggedOctokit({ auth: token })
+    this.gh = getOctokit(token, paginateRest, composePaginateRest)
   }
 
   /**
@@ -50,9 +49,7 @@ export class GitHub {
         logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHub#getUserRepos`)
 
         throw new Error('Invalid response from GitHub')
-      }
-
-      return res
+      } else return res
     } catch (error) {
       logger.error(`Error caught when getting repos for user ${username}:`, `GitHub#getUserRepos`)
       logger.error(error)
@@ -79,9 +76,7 @@ export class GitHub {
         )
 
         return undefined
-      }
-
-      return res
+      } else return res
     } catch (error) {
       logger.error(`Error caught when getting repos for org ${org}:`, `GitHub#getOrgRepos`)
       logger.error(error)
@@ -132,21 +127,24 @@ export class GitHub {
         logger.info(`${owner}/${repo} is an empty repository.`, `GitHub#getBranches`)
 
         return undefined
-      } else {
-        for (const branch of response) {
-          const commit = await this.gh.repos.getCommit({ owner, repo, ref: branch.commit.sha })
+      }
 
-          branchesAndCommits.push({ branch: branch, commit: commit.data.commit })
-        }
+      for (const branch of response) {
+        // const commit = await this.gh.repos.getCommit({ owner, repo, ref: branch.commit.sha })
+        const commit = await this.gh.request('GET /repos/{owner}/{repo}/commits/{ref}', {
+          owner,
+          repo,
+          ref: branch.commit.sha,
+        })
 
-        return branchesAndCommits
+        branchesAndCommits.push({ branch: branch, commit: commit.data.commit })
       }
     } catch (error) {
       logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHub#getBranches`)
       logger.error(error)
-
-      return undefined
     }
+
+    return branchesAndCommits
   }
 
   public async getFlaggedBranches(branches: BranchAndCommit[], monthLimit: number) {}

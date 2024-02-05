@@ -1,8 +1,23 @@
 {
-  "name": "o11y-slack-bot-poc",
-  "type": "module",
+  "name": "o11y-stale-branch-poc",
+  "displayName": "O11y Stale Branch POC",
+  "description": "A proof of concept for a GitHub Action that can clean up stale branches.",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "module": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "bundle": "npm run format:write && npm run package",
+    "format:check": "prettier --check .",
+    "format:write": "prettier --write .",
+    "package": "ncc build src/index.ts --license licenses.txt",
+    "package:watch": "npm run package -- --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0",
     "@octokit/plugin-paginate-rest": "^9.1.5",
     "@octokit/rest": "^20.0.2",
     "@octokit/types": "^12.4.0",
@@ -17,12 +32,22 @@
     "picocolors": "^1.0.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.0.4",
     "@types/fs-extra": "^11.0.4",
     "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.11.10",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "@vercel/ncc": "^0.38.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-github": "^4.10.1",
+    "eslint-plugin-jest": "^27.6.3",
+    "eslint-plugin-jsonc": "^2.13.0",
+    "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.2.4",
+    "prettier-eslint": "^16.3.0",
     "prettier-plugin-organize-imports": "^3.2.4",
-    "prettier-plugin-packagejson": "^2.4.9"
+    "prettier-plugin-packagejson": "^2.4.9",
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

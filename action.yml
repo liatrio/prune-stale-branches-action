@@ -1,0 +1,26 @@
+name: 'Stale Branch O11y POC'
+description: |
+  This action is a POC for Liatrio's Project O11y. It will check a repo for any
+  stale branches and create an issue for each one found that's flagged for
+  deletion. The amount of time until a branch is considered stale is
+  configurable via the `stale-branch-age` input.
+author: 'Liatrio'
+branding:
+  icon: 'heart'
+  color: 'green'
+
+inputs:
+  github-token:
+    description: 'The API token used to authenticate with GitHub.'
+    required: true
+
+  stale-branch-age:
+    description: |
+      The amount and unit of time ([amount] [unit]) until a branch is considered
+      stale and flagged for deletion. The default is "30 days".
+    required: true
+    default: '30 days'
+
+runs:
+  using: node20
+  main: dist/index.js
