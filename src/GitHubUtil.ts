@@ -1,8 +1,8 @@
 import { getOctokit } from '@actions/github'
-import { GitHub } from '@actions/github/lib/utils'
+import { GitHub } from '@actions/github/lib/utils.js'
 import { composePaginateRest, paginateRest } from '@octokit/plugin-paginate-rest'
 import { type Endpoints } from '@octokit/types'
-import { logger } from './Logger'
+import { logger } from './Logger.js'
 
 /** A type that represents an object that contains both a branch and its last commit. */
 export type BranchAndCommit = {

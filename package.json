@@ -2,6 +2,7 @@
   "name": "o11y-stale-branch-poc",
   "displayName": "O11y Stale Branch POC",
   "description": "A proof of concept for a GitHub Action that can clean up stale branches.",
+  "type": "module",
   "exports": {
     ".": "./dist/index.js"
   },
