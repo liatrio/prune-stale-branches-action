@@ -25,22 +25,11 @@ export class Logger {
     }
   }
 
-  /**
-   * Log a message with the DEBUG level.
-   *
-   * **NOTE: This method will only print to stdout when the `DEBUG` environment variable is set to
-   * `true`.**
-   *
-   * @param message The message to log.
-   * @param source The source of the message. Defaults to 'Logger#debug'.
-   */
   public debug(message: string | unknown, source: string = 'Logger#debug') {
-    if (process.env.DEBUG === 'true') {
-      if (typeof message === 'string') {
-        console.log(pc.cyan(`[DEBUG][${source}] ${message}`))
-      } else {
-        console.log(pc.cyan(`[DEBUG][${source}] ${JSON.stringify(message, null, 2)}`))
-      }
+    if (typeof message === 'string') {
+      console.log(pc.cyan(`[DEBUG][${source}] ${message}`))
+    } else {
+      console.log(pc.cyan(`[DEBUG][${source}] ${JSON.stringify(message, null, 2)}`))
     }
   }
 
