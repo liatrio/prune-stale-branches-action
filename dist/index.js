@@ -30963,7 +30963,6 @@ async function getFlaggedBranches() {
         /** An instance the GitHub utility class for interacting with the GitHub API. */
         const gh = new GitHubUtil(token);
         const branchesAndCommits = await gh.getBranchesAndLatestCommit(github.context.repo.owner, github.context.repo.repo);
-        const flaggedBranches = [];
         if (branchesAndCommits && branchesAndCommits.length > 0) {
             logger.debug(`${branchesAndCommits.length} branches found.`, 'index#getFlaggedBranches');
             for (const branch of branchesAndCommits) {
