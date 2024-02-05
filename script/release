@@ -50,7 +50,7 @@ else
 fi
 
 # Tag the new release
-git tag -a "$new_tag" -m "$new_tag Release"
+git tag -s "$new_tag" -m "$new_tag Release"
 echo -e "${GREEN}Tagged: $new_tag${OFF}"
 
 # Push the new tag to the remote
