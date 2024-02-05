@@ -5873,6 +5873,13 @@ function removeHook(state, name, method) {
 
 /***/ }),
 
+/***/ 7401:
+/***/ (function(module) {
+
+!function(t,e){ true?module.exports=e():0}(this,(function(){"use strict";var t=1e3,e=6e4,n=36e5,r="millisecond",i="second",s="minute",u="hour",a="day",o="week",c="month",f="quarter",h="year",d="date",l="Invalid Date",$=/^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/,y=/\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g,M={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_"),ordinal:function(t){var e=["th","st","nd","rd"],n=t%100;return"["+t+(e[(n-20)%10]||e[n]||e[0])+"]"}},m=function(t,e,n){var r=String(t);return!r||r.length>=e?t:""+Array(e+1-r.length).join(n)+t},v={s:m,z:function(t){var e=-t.utcOffset(),n=Math.abs(e),r=Math.floor(n/60),i=n%60;return(e<=0?"+":"-")+m(r,2,"0")+":"+m(i,2,"0")},m:function t(e,n){if(e.date()<n.date())return-t(n,e);var r=12*(n.year()-e.year())+(n.month()-e.month()),i=e.clone().add(r,c),s=n-i<0,u=e.clone().add(r+(s?-1:1),c);return+(-(r+(n-i)/(s?i-u:u-i))||0)},a:function(t){return t<0?Math.ceil(t)||0:Math.floor(t)},p:function(t){return{M:c,y:h,w:o,d:a,D:d,h:u,m:s,s:i,ms:r,Q:f}[t]||String(t||"").toLowerCase().replace(/s$/,"")},u:function(t){return void 0===t}},g="en",D={};D[g]=M;var p="$isDayjsObject",S=function(t){return t instanceof _||!(!t||!t[p])},w=function t(e,n,r){var i;if(!e)return g;if("string"==typeof e){var s=e.toLowerCase();D[s]&&(i=s),n&&(D[s]=n,i=s);var u=e.split("-");if(!i&&u.length>1)return t(u[0])}else{var a=e.name;D[a]=e,i=a}return!r&&i&&(g=i),i||!r&&g},O=function(t,e){if(S(t))return t.clone();var n="object"==typeof e?e:{};return n.date=t,n.args=arguments,new _(n)},b=v;b.l=w,b.i=S,b.w=function(t,e){return O(t,{locale:e.$L,utc:e.$u,x:e.$x,$offset:e.$offset})};var _=function(){function M(t){this.$L=w(t.locale,null,!0),this.parse(t),this.$x=this.$x||t.x||{},this[p]=!0}var m=M.prototype;return m.parse=function(t){this.$d=function(t){var e=t.date,n=t.utc;if(null===e)return new Date(NaN);if(b.u(e))return new Date;if(e instanceof Date)return new Date(e);if("string"==typeof e&&!/Z$/i.test(e)){var r=e.match($);if(r){var i=r[2]-1||0,s=(r[7]||"0").substring(0,3);return n?new Date(Date.UTC(r[1],i,r[3]||1,r[4]||0,r[5]||0,r[6]||0,s)):new Date(r[1],i,r[3]||1,r[4]||0,r[5]||0,r[6]||0,s)}}return new Date(e)}(t),this.init()},m.init=function(){var t=this.$d;this.$y=t.getFullYear(),this.$M=t.getMonth(),this.$D=t.getDate(),this.$W=t.getDay(),this.$H=t.getHours(),this.$m=t.getMinutes(),this.$s=t.getSeconds(),this.$ms=t.getMilliseconds()},m.$utils=function(){return b},m.isValid=function(){return!(this.$d.toString()===l)},m.isSame=function(t,e){var n=O(t);return this.startOf(e)<=n&&n<=this.endOf(e)},m.isAfter=function(t,e){return O(t)<this.startOf(e)},m.isBefore=function(t,e){return this.endOf(e)<O(t)},m.$g=function(t,e,n){return b.u(t)?this[e]:this.set(n,t)},m.unix=function(){return Math.floor(this.valueOf()/1e3)},m.valueOf=function(){return this.$d.getTime()},m.startOf=function(t,e){var n=this,r=!!b.u(e)||e,f=b.p(t),l=function(t,e){var i=b.w(n.$u?Date.UTC(n.$y,e,t):new Date(n.$y,e,t),n);return r?i:i.endOf(a)},$=function(t,e){return b.w(n.toDate()[t].apply(n.toDate("s"),(r?[0,0,0,0]:[23,59,59,999]).slice(e)),n)},y=this.$W,M=this.$M,m=this.$D,v="set"+(this.$u?"UTC":"");switch(f){case h:return r?l(1,0):l(31,11);case c:return r?l(1,M):l(0,M+1);case o:var g=this.$locale().weekStart||0,D=(y<g?y+7:y)-g;return l(r?m-D:m+(6-D),M);case a:case d:return $(v+"Hours",0);case u:return $(v+"Minutes",1);case s:return $(v+"Seconds",2);case i:return $(v+"Milliseconds",3);default:return this.clone()}},m.endOf=function(t){return this.startOf(t,!1)},m.$set=function(t,e){var n,o=b.p(t),f="set"+(this.$u?"UTC":""),l=(n={},n[a]=f+"Date",n[d]=f+"Date",n[c]=f+"Month",n[h]=f+"FullYear",n[u]=f+"Hours",n[s]=f+"Minutes",n[i]=f+"Seconds",n[r]=f+"Milliseconds",n)[o],$=o===a?this.$D+(e-this.$W):e;if(o===c||o===h){var y=this.clone().set(d,1);y.$d[l]($),y.init(),this.$d=y.set(d,Math.min(this.$D,y.daysInMonth())).$d}else l&&this.$d[l]($);return this.init(),this},m.set=function(t,e){return this.clone().$set(t,e)},m.get=function(t){return this[b.p(t)]()},m.add=function(r,f){var d,l=this;r=Number(r);var $=b.p(f),y=function(t){var e=O(l);return b.w(e.date(e.date()+Math.round(t*r)),l)};if($===c)return this.set(c,this.$M+r);if($===h)return this.set(h,this.$y+r);if($===a)return y(1);if($===o)return y(7);var M=(d={},d[s]=e,d[u]=n,d[i]=t,d)[$]||1,m=this.$d.getTime()+r*M;return b.w(m,this)},m.subtract=function(t,e){return this.add(-1*t,e)},m.format=function(t){var e=this,n=this.$locale();if(!this.isValid())return n.invalidDate||l;var r=t||"YYYY-MM-DDTHH:mm:ssZ",i=b.z(this),s=this.$H,u=this.$m,a=this.$M,o=n.weekdays,c=n.months,f=n.meridiem,h=function(t,n,i,s){return t&&(t[n]||t(e,r))||i[n].slice(0,s)},d=function(t){return b.s(s%12||12,t,"0")},$=f||function(t,e,n){var r=t<12?"AM":"PM";return n?r.toLowerCase():r};return r.replace(y,(function(t,r){return r||function(t){switch(t){case"YY":return String(e.$y).slice(-2);case"YYYY":return b.s(e.$y,4,"0");case"M":return a+1;case"MM":return b.s(a+1,2,"0");case"MMM":return h(n.monthsShort,a,c,3);case"MMMM":return h(c,a);case"D":return e.$D;case"DD":return b.s(e.$D,2,"0");case"d":return String(e.$W);case"dd":return h(n.weekdaysMin,e.$W,o,2);case"ddd":return h(n.weekdaysShort,e.$W,o,3);case"dddd":return o[e.$W];case"H":return String(s);case"HH":return b.s(s,2,"0");case"h":return d(1);case"hh":return d(2);case"a":return $(s,u,!0);case"A":return $(s,u,!1);case"m":return String(u);case"mm":return b.s(u,2,"0");case"s":return String(e.$s);case"ss":return b.s(e.$s,2,"0");case"SSS":return b.s(e.$ms,3,"0");case"Z":return i}return null}(t)||i.replace(":","")}))},m.utcOffset=function(){return 15*-Math.round(this.$d.getTimezoneOffset()/15)},m.diff=function(r,d,l){var $,y=this,M=b.p(d),m=O(r),v=(m.utcOffset()-this.utcOffset())*e,g=this-m,D=function(){return b.m(y,m)};switch(M){case h:$=D()/12;break;case c:$=D();break;case f:$=D()/3;break;case o:$=(g-v)/6048e5;break;case a:$=(g-v)/864e5;break;case u:$=g/n;break;case s:$=g/e;break;case i:$=g/t;break;default:$=g}return l?$:b.a($)},m.daysInMonth=function(){return this.endOf(c).$D},m.$locale=function(){return D[this.$L]},m.locale=function(t,e){if(!t)return this.$L;var n=this.clone(),r=w(t,e,!0);return r&&(n.$L=r),n},m.clone=function(){return b.w(this.$d,this)},m.toDate=function(){return new Date(this.valueOf())},m.toJSON=function(){return this.isValid()?this.toISOString():null},m.toISOString=function(){return this.$d.toISOString()},m.toString=function(){return this.$d.toUTCString()},M}(),k=_.prototype;return O.prototype=k,[["$ms",r],["$s",i],["$m",s],["$H",u],["$W",a],["$M",c],["$y",h],["$D",d]].forEach((function(t){k[t[1]]=function(e){return this.$g(e,t[0],t[1])}})),O.extend=function(t,e){return t.$i||(t(e,_,O),t.$i=!0),O},O.locale=w,O.isDayjs=S,O.unix=function(t){return O(1e3*t)},O.en=D[g],O.Ls=D,O.p={},O}));
+
+/***/ }),
+
 /***/ 8932:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -28860,246 +28867,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 7642:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-
-// EXPORTS
-__nccwpck_require__.d(__webpack_exports__, {
-  "m": () => (/* binding */ GitHubUtil)
-});
-
-// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
-var github = __nccwpck_require__(5438);
-// EXTERNAL MODULE: ./node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
-var dist_node = __nccwpck_require__(4193);
-// EXTERNAL MODULE: ./node_modules/picocolors/picocolors.js
-var picocolors = __nccwpck_require__(7023);
-var picocolors_default = /*#__PURE__*/__nccwpck_require__.n(picocolors);
-;// CONCATENATED MODULE: ./src/Logger.ts
-
-class Logger {
-    info(message, source = 'Logger#info') {
-        if (typeof message === 'string') {
-            console.log(picocolors_default().gray(`[INFO][${source}] ${message}`));
-        }
-        else {
-            console.log(picocolors_default().gray(`[INFO][${source}] ${JSON.stringify(message, null, 2)}`));
-        }
-    }
-    warn(message, source = 'Logger#warn') {
-        if (typeof message === 'string') {
-            console.log(picocolors_default().yellow(`[WARN][${source}] ${message}`));
-        }
-        else {
-            console.log(picocolors_default().yellow(`[WARN][${source}] ${JSON.stringify(message, null, 2)}`));
-        }
-    }
-    error(message, source = 'Logger#error') {
-        if (typeof message === 'string') {
-            console.error(picocolors_default().red(`[ERROR][${source}] ${message}`));
-        }
-        else {
-            console.error(picocolors_default().red(`[ERROR][${source}] ${JSON.stringify(message, null, 2)}`));
-        }
-    }
-    /**
-     * Log a message with the DEBUG level.
-     *
-     * **NOTE: This method will only print to stdout when the `DEBUG` environment variable is set to
-     * `true`.**
-     *
-     * @param message The message to log.
-     * @param source The source of the message. Defaults to 'Logger#debug'.
-     */
-    debug(message, source = 'Logger#debug') {
-        if (process.env.DEBUG === 'true') {
-            if (typeof message === 'string') {
-                console.log(picocolors_default().cyan(`[DEBUG][${source}] ${message}`));
-            }
-            else {
-                console.log(picocolors_default().cyan(`[DEBUG][${source}] ${JSON.stringify(message, null, 2)}`));
-            }
-        }
-    }
-    success(message, source = 'Logger#success') {
-        if (typeof message === 'string') {
-            console.log(picocolors_default().green(`[SUCCESS][${source}] ${message}`));
-        }
-        else {
-            console.log(picocolors_default().green(`[SUCCESS][${source}] ${JSON.stringify(message, null, 2)}`));
-        }
-    }
-}
-const logger = new Logger();
-
-;// CONCATENATED MODULE: ./src/GitHubUtil.ts
-
-
-
-/**
- * A class with a few utility methods that simplify interacting with the GitHub REST API and the
- * data it returns.
- */
-class GitHubUtil {
-    gh;
-    /**
-     * Create a new instance of the {@link GitHub} class with the given {@link token} and creates a
-     * new instance of the `Octokit` class with the {@link paginateRest} and
-     * {@link composePaginateRest} plugins.
-     *
-     * @param token The GitHub token to use for authentication.
-     */
-    constructor(token) {
-        this.gh = (0,github.getOctokit)(token, dist_node.paginateRest, dist_node.composePaginateRest);
-    }
-    /**
-     * Retrieves all of the repositories under the given `username`.
-     *
-     * @param username The name of the user.
-     *
-     * @returns All the repositories under the given `username`.
-     */
-    async getUserRepos(username) {
-        try {
-            const res = await this.gh.paginate('GET /users/{username}/repos', { username, type: 'owner' });
-            if (res.length === 0) {
-                logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHub#getUserRepos`);
-                throw new Error('Invalid response from GitHub');
-            }
-            else
-                return res;
-        }
-        catch (error) {
-            logger.error(`Error caught when getting repos for user ${username}:`, `GitHub#getUserRepos`);
-            logger.error(error);
-            return undefined;
-        }
-    }
-    /**
-     * Retrieves all of the repositories under the given `org`.
-     *
-     * @param org The name of the organization.
-     *
-     * @returns All the repositories under the given `org`.
-     */
-    async getOrgRepos(org) {
-        try {
-            const res = await this.gh.paginate('GET /orgs/{org}/repos', { org, type: 'all' });
-            if (res.length === 0) {
-                logger.error(`No repos found for org ${org}: ${JSON.stringify(res, null, 2)}`, `GitHub#getOrgRepos`);
-                return undefined;
-            }
-            else
-                return res;
-        }
-        catch (error) {
-            logger.error(`Error caught when getting repos for org ${org}:`, `GitHub#getOrgRepos`);
-            logger.error(error);
-            return undefined;
-        }
-    }
-    /**
-     * Retrieves all of the repositories under a given owner, either an organization or a user, and
-     * returns them via a Promise.
-     *
-     * @param owner The owner of the repository.
-     * @param ownerType The type of the owner. Either 'org' or 'user'.
-     *
-     * @returns All the repositories under the given `owner`.
-     */
-    async getRepos(owner, ownerType = 'org') {
-        try {
-            switch (ownerType) {
-                case 'org':
-                    return await this.getOrgRepos(owner);
-                case 'user':
-                    return await this.getUserRepos(owner);
-            }
-        }
-        catch (error) {
-            logger.error(`Error caught when getting repos for ${ownerType} ${owner}:`, `GitHub#getRepos`);
-            logger.error(error);
-            return undefined;
-        }
-    }
-    /**
-     * Retrieve all the branches present in a repository, along with their last commit so we have age
-     * information.
-     *
-     * @param owner The owner of the repository.
-     * @param repo The name of the repository.
-     */
-    async getBranchesAndLatestCommit(owner, repo) {
-        const branchesAndCommits = [];
-        try {
-            const response = await this.gh.paginate('GET /repos/{owner}/{repo}/branches', { owner, repo });
-            if (response.length === 0) {
-                logger.info(`${owner}/${repo} is an empty repository.`, `GitHub#getBranches`);
-                return undefined;
-            }
-            for (const branch of response) {
-                // const commit = await this.gh.repos.getCommit({ owner, repo, ref: branch.commit.sha })
-                const commit = await this.gh.request('GET /repos/{owner}/{repo}/commits/{ref}', {
-                    owner,
-                    repo,
-                    ref: branch.commit.sha,
-                });
-                branchesAndCommits.push({ branch: branch, commit: commit.data.commit });
-            }
-        }
-        catch (error) {
-            logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHub#getBranches`);
-            logger.error(error);
-        }
-        return branchesAndCommits;
-    }
-    async getFlaggedBranches(branches, monthLimit) { }
-}
-
-
-/***/ }),
-
-/***/ 6144:
-/***/ ((module, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
-
-__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5438);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _GitHubUtil_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(7642);
-
-
-
-try {
-    /**
-     * A string like in the format of `<number> <unit>` like "30 days" that determines how long a
-     * branch must go without activity to be considered stale.
-     */
-    const staleBranchAge = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('stale-branch-age');
-    /** The personal access token used for authenticating with the GitHub API. */
-    const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github-token');
-    const gh = new _GitHubUtil_js__WEBPACK_IMPORTED_MODULE_2__/* .GitHubUtil */ .m(token);
-    const branchesAndCommits = await gh.getBranchesAndLatestCommit(_actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo.owner, _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo.repo);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('branches-and-commits', JSON.stringify(branchesAndCommits));
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('stale-branch-age', staleBranchAge);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('branches-count', branchesAndCommits?.length || 0);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Action completed successfully!');
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Stale Branch Age: ${staleBranchAge}`);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Branches Count: ${branchesAndCommits?.length || 0}`);
-}
-catch (error) {
-    if (error instanceof Error)
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed('An error occurred, check logs for more information.');
-}
-
-__webpack_async_result__();
-} catch(e) { __webpack_async_result__(e); } }, 1);
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
@@ -30943,75 +30710,6 @@ module.exports = parseParams
 /******/ }
 /******/ 
 /************************************************************************/
-/******/ /* webpack/runtime/async module */
-/******/ (() => {
-/******/ 	var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
-/******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
-/******/ 	var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
-/******/ 	var resolveQueue = (queue) => {
-/******/ 		if(queue && !queue.d) {
-/******/ 			queue.d = 1;
-/******/ 			queue.forEach((fn) => (fn.r--));
-/******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
-/******/ 		}
-/******/ 	}
-/******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
-/******/ 		if(dep !== null && typeof dep === "object") {
-/******/ 			if(dep[webpackQueues]) return dep;
-/******/ 			if(dep.then) {
-/******/ 				var queue = [];
-/******/ 				queue.d = 0;
-/******/ 				dep.then((r) => {
-/******/ 					obj[webpackExports] = r;
-/******/ 					resolveQueue(queue);
-/******/ 				}, (e) => {
-/******/ 					obj[webpackError] = e;
-/******/ 					resolveQueue(queue);
-/******/ 				});
-/******/ 				var obj = {};
-/******/ 				obj[webpackQueues] = (fn) => (fn(queue));
-/******/ 				return obj;
-/******/ 			}
-/******/ 		}
-/******/ 		var ret = {};
-/******/ 		ret[webpackQueues] = x => {};
-/******/ 		ret[webpackExports] = dep;
-/******/ 		return ret;
-/******/ 	}));
-/******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
-/******/ 		var queue;
-/******/ 		hasAwait && ((queue = []).d = 1);
-/******/ 		var depQueues = new Set();
-/******/ 		var exports = module.exports;
-/******/ 		var currentDeps;
-/******/ 		var outerResolve;
-/******/ 		var reject;
-/******/ 		var promise = new Promise((resolve, rej) => {
-/******/ 			reject = rej;
-/******/ 			outerResolve = resolve;
-/******/ 		});
-/******/ 		promise[webpackExports] = exports;
-/******/ 		promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
-/******/ 		module.exports = promise;
-/******/ 		body((deps) => {
-/******/ 			currentDeps = wrapDeps(deps);
-/******/ 			var fn;
-/******/ 			var getResult = () => (currentDeps.map((d) => {
-/******/ 				if(d[webpackError]) throw d[webpackError];
-/******/ 				return d[webpackExports];
-/******/ 			}))
-/******/ 			var promise = new Promise((resolve) => {
-/******/ 				fn = () => (resolve(getResult));
-/******/ 				fn.r = 0;
-/******/ 				var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
-/******/ 				currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
-/******/ 			});
-/******/ 			return fn.r ? promise : getResult();
-/******/ 		}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
-/******/ 		queue && (queue.d = 0);
-/******/ 	};
-/******/ })();
-/******/ 
 /******/ /* webpack/runtime/compat get default export */
 /******/ (() => {
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -31046,10 +30744,271 @@ module.exports = parseParams
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
 /******/ 
 /************************************************************************/
-/******/ 
-/******/ // startup
-/******/ // Load entry module and return exports
-/******/ // This entry module used 'module' so it can't be inlined
-/******/ var __webpack_exports__ = __nccwpck_require__(6144);
-/******/ __webpack_exports__ = await __webpack_exports__;
-/******/ 
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(5438);
+// EXTERNAL MODULE: ./node_modules/dayjs/dayjs.min.js
+var dayjs_min = __nccwpck_require__(7401);
+var dayjs_min_default = /*#__PURE__*/__nccwpck_require__.n(dayjs_min);
+// EXTERNAL MODULE: ./node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
+var dist_node = __nccwpck_require__(4193);
+// EXTERNAL MODULE: ./node_modules/picocolors/picocolors.js
+var picocolors = __nccwpck_require__(7023);
+var picocolors_default = /*#__PURE__*/__nccwpck_require__.n(picocolors);
+;// CONCATENATED MODULE: ./src/Logger.ts
+
+class Logger {
+    info(message, source = 'Logger#info') {
+        if (typeof message === 'string') {
+            console.log(picocolors_default().gray(`[INFO][${source}] ${message}`));
+        }
+        else {
+            console.log(picocolors_default().gray(`[INFO][${source}] ${JSON.stringify(message, null, 2)}`));
+        }
+    }
+    warn(message, source = 'Logger#warn') {
+        if (typeof message === 'string') {
+            console.log(picocolors_default().yellow(`[WARN][${source}] ${message}`));
+        }
+        else {
+            console.log(picocolors_default().yellow(`[WARN][${source}] ${JSON.stringify(message, null, 2)}`));
+        }
+    }
+    error(message, source = 'Logger#error') {
+        if (typeof message === 'string') {
+            console.error(picocolors_default().red(`[ERROR][${source}] ${message}`));
+        }
+        else {
+            console.error(picocolors_default().red(`[ERROR][${source}] ${JSON.stringify(message, null, 2)}`));
+        }
+    }
+    debug(message, source = 'Logger#debug') {
+        if (typeof message === 'string') {
+            console.log(picocolors_default().cyan(`[DEBUG][${source}] ${message}`));
+        }
+        else {
+            console.log(picocolors_default().cyan(`[DEBUG][${source}] ${JSON.stringify(message, null, 2)}`));
+        }
+    }
+    success(message, source = 'Logger#success') {
+        if (typeof message === 'string') {
+            console.log(picocolors_default().green(`[SUCCESS][${source}] ${message}`));
+        }
+        else {
+            console.log(picocolors_default().green(`[SUCCESS][${source}] ${JSON.stringify(message, null, 2)}`));
+        }
+    }
+}
+const logger = new Logger();
+
+;// CONCATENATED MODULE: ./src/GitHubUtil.ts
+
+
+
+/**
+ * A class with a few utility methods that simplify interacting with the GitHub REST API and the
+ * data it returns.
+ */
+class GitHubUtil {
+    gh;
+    /**
+     * Create a new instance of the {@link GitHub} class with the given {@link token} and creates a
+     * new instance of the `Octokit` class with the {@link paginateRest} and
+     * {@link composePaginateRest} plugins.
+     *
+     * @param token The GitHub token to use for authentication.
+     */
+    constructor(token) {
+        this.gh = (0,github.getOctokit)(token, dist_node.paginateRest, dist_node.composePaginateRest);
+    }
+    /**
+     * Retrieves all of the repositories under the given `username`.
+     *
+     * @param username The name of the user.
+     *
+     * @returns All the repositories under the given `username`.
+     */
+    async getUserRepos(username) {
+        try {
+            const res = await this.gh.paginate('GET /users/{username}/repos', { username, type: 'owner' });
+            if (res.length === 0) {
+                logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHub#getUserRepos`);
+                throw new Error('Invalid response from GitHub');
+            }
+            else
+                return res;
+        }
+        catch (error) {
+            logger.error(`Error caught when getting repos for user ${username}:`, `GitHub#getUserRepos`);
+            logger.error(error);
+            return undefined;
+        }
+    }
+    /**
+     * Retrieves all of the repositories under the given `org`.
+     *
+     * @param org The name of the organization.
+     *
+     * @returns All the repositories under the given `org`.
+     */
+    async getOrgRepos(org) {
+        try {
+            const res = await this.gh.paginate('GET /orgs/{org}/repos', { org, type: 'all' });
+            if (res.length === 0) {
+                logger.error(`No repos found for org ${org}: ${JSON.stringify(res, null, 2)}`, `GitHub#getOrgRepos`);
+                return undefined;
+            }
+            else
+                return res;
+        }
+        catch (error) {
+            logger.error(`Error caught when getting repos for org ${org}:`, `GitHub#getOrgRepos`);
+            logger.error(error);
+            return undefined;
+        }
+    }
+    /**
+     * Retrieves all of the repositories under a given owner, either an organization or a user, and
+     * returns them via a Promise.
+     *
+     * @param owner The owner of the repository.
+     * @param ownerType The type of the owner. Either 'org' or 'user'.
+     *
+     * @returns All the repositories under the given `owner`.
+     */
+    async getRepos(owner, ownerType = 'org') {
+        try {
+            switch (ownerType) {
+                case 'org':
+                    return await this.getOrgRepos(owner);
+                case 'user':
+                    return await this.getUserRepos(owner);
+            }
+        }
+        catch (error) {
+            logger.error(`Error caught when getting repos for ${ownerType} ${owner}:`, `GitHub#getRepos`);
+            logger.error(error);
+            return undefined;
+        }
+    }
+    /**
+     * Retrieve all the branches present in a repository, along with their last commit so we have age
+     * information.
+     *
+     * @param owner The owner of the repository.
+     * @param repo The name of the repository.
+     */
+    async getBranchesAndLatestCommit(owner, repo) {
+        const branchesAndCommits = [];
+        try {
+            const response = await this.gh.paginate('GET /repos/{owner}/{repo}/branches', { owner, repo });
+            if (response.length === 0) {
+                logger.info(`${owner}/${repo} is an empty repository.`, `GitHub#getBranches`);
+                return undefined;
+            }
+            for (const branch of response) {
+                // const commit = await this.gh.repos.getCommit({ owner, repo, ref: branch.commit.sha })
+                const commit = await this.gh.request('GET /repos/{owner}/{repo}/commits/{ref}', {
+                    owner,
+                    repo,
+                    ref: branch.commit.sha,
+                });
+                branchesAndCommits.push({ branch: branch, commit: commit.data.commit });
+            }
+        }
+        catch (error) {
+            logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHub#getBranches`);
+            logger.error(error);
+        }
+        return branchesAndCommits;
+    }
+    async getFlaggedBranches(branches, monthLimit) { }
+}
+
+;// CONCATENATED MODULE: ./src/index.ts
+
+
+
+
+
+function getActionsInput() {
+    const staleBranchAgeInput = core.getInput('stale-branch-age');
+    const staleBranchAgeSplit = staleBranchAgeInput.split(' ');
+    if (staleBranchAgeSplit.length !== 2) {
+        core.setFailed('Invalid stale-branch-age input. Must be in the format of "<value> <unit>". Eg: "30 days".');
+        throw new Error('Invalid stale-branch-age input.');
+    }
+    const staleBranchAge = {
+        number: Number(staleBranchAgeSplit[0]),
+        unit: staleBranchAgeSplit[1],
+    };
+    logger.debug(`Parsed staleBranchAge: ${JSON.stringify(staleBranchAge, null, 2)}`, 'index#run');
+    /**
+     * The date that determines how long a branch must go without activity to be considered stale.
+     */
+    const cutoffDate = dayjs_min_default()().subtract(staleBranchAge.number, staleBranchAge.unit);
+    /** The personal access token used for authenticating with the GitHub API. */
+    const token = core.getInput('github-token');
+    return { cutoffDate, token };
+}
+async function getFlaggedBranches() {
+    const flaggedBranches = [];
+    try {
+        const { cutoffDate, token } = getActionsInput();
+        /** An instance the GitHub utility class for interacting with the GitHub API. */
+        const gh = new GitHubUtil(token);
+        const branchesAndCommits = await gh.getBranchesAndLatestCommit(github.context.repo.owner, github.context.repo.repo);
+        const flaggedBranches = [];
+        if (branchesAndCommits && branchesAndCommits.length > 0) {
+            logger.debug(`${branchesAndCommits.length} branches found.`, 'index#getFlaggedBranches');
+            for (const branch of branchesAndCommits) {
+                logger.debug(`Processing branch: ${branch.branch.name}`, 'index#getFlaggedBranches');
+                const lastCommitDate = dayjs_min_default()(branch.commit.committer?.date);
+                // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
+                if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
+                    logger.success(`Found a stale branch: ${branch.branch.name}`, 'index#getFlaggedBranches');
+                    logger.success(`Last commit date: ${lastCommitDate.format('YYYY-MM-DD')}`, 'index#getFlaggedBranches');
+                    logger.success(`Cutoff date: ${cutoffDate.format('YYYY-MM-DD')}`, 'index#getFlaggedBranches');
+                    flaggedBranches.push({
+                        repoName: github.context.repo.repo,
+                        branchName: branch.branch.name,
+                        lastCommitDate,
+                    });
+                }
+            }
+        }
+    }
+    catch (error) {
+        logger.error('An error occurred while getting flagged branches:', 'index#getFlaggedBranches');
+        logger.error(error);
+    }
+    return flaggedBranches;
+}
+async function run() {
+    try {
+        const flaggedBranches = await getFlaggedBranches();
+        core.notice(`Flagged Branches Count: ${flaggedBranches.length || 0}`);
+        logger.debug(`Flagged Branches Count: ${flaggedBranches.length || 0}`, 'index#run');
+        if (flaggedBranches.length > 0) {
+            for (const branch of flaggedBranches) {
+                core.notice(`Flagged Branch: ${branch.branchName}`);
+                logger.debug(`Flagged Branch: ${branch.branchName}`, 'index#run');
+            }
+        }
+        core.info('Action completed successfully!');
+    }
+    catch (error) {
+        if (error instanceof Error)
+            core.setFailed(error.message);
+        core.setFailed('An error occurred, check logs for more information.');
+    }
+}
+run();
+
+})();
+
