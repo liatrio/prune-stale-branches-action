@@ -16,7 +16,7 @@ inputs:
 
   stale-branch-age:
     description: |
-      The amount and unit of time ([amount] [unit]) until a branch is considered
+      The amount and unit of time ([value] [unit]) until a branch is considered
       stale and flagged for deletion. The default is "30 days".
     required: true
     default: '30 days'
