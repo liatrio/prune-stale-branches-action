@@ -3,7 +3,7 @@ import { context } from '@actions/github'
 import { program } from 'commander'
 import Day from 'dayjs'
 import pc from 'picocolors'
-import { GitHubUtil, type BranchAndCommit, type ReposResponse } from './GitHubUtil.js'
+import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
 
 /**
@@ -119,7 +119,10 @@ export async function run(): Promise<void> {
 
     const gh = new GitHubUtil(token)
 
-    const branchesAndCommits = await gh.getBranchesAndLatestCommit(context.repo.owner, context.repo.repo)
+    const branchesAndCommits = await gh.getBranchesAndLatestCommit(
+      context.repo.owner,
+      context.repo.repo,
+    )
 
     core.setOutput('branches-and-commits', JSON.stringify(branchesAndCommits))
     core.setOutput('stale-branch-age', staleBranchAge)
