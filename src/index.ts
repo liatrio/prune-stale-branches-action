@@ -54,8 +54,6 @@ async function getFlaggedBranches() {
       context.repo.repo,
     )
 
-    const flaggedBranches = []
-
     if (branchesAndCommits && branchesAndCommits.length > 0) {
       logger.debug(`${branchesAndCommits.length} branches found.`, 'index#getFlaggedBranches')
 
