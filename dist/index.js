@@ -30750,11 +30750,11 @@ var __webpack_exports__ = {};
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
-// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
-var github = __nccwpck_require__(5438);
 // EXTERNAL MODULE: ./node_modules/dayjs/dayjs.min.js
 var dayjs_min = __nccwpck_require__(7401);
 var dayjs_min_default = /*#__PURE__*/__nccwpck_require__.n(dayjs_min);
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(5438);
 // EXTERNAL MODULE: ./node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
 var dist_node = __nccwpck_require__(4193);
 // EXTERNAL MODULE: ./node_modules/picocolors/picocolors.js
@@ -30810,6 +30810,11 @@ const logger = new Logger();
 
 
 
+
+/** A type that represents an object that contains both a branch and its last commit. */
+function getFlaggedBranchIssueTitle(branchName) {
+    return `The ${branchName} branch is flagged for deletion.`;
+}
 /**
  * A class with a few utility methods that simplify interacting with the GitHub REST API and the
  * data it returns.
@@ -30837,14 +30842,14 @@ class GitHubUtil {
         try {
             const res = await this.gh.paginate('GET /users/{username}/repos', { username, type: 'owner' });
             if (res.length === 0) {
-                logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHub#getUserRepos`);
+                logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHubUtil#getUserRepos`);
                 throw new Error('Invalid response from GitHub');
             }
             else
                 return res;
         }
         catch (error) {
-            logger.error(`Error caught when getting repos for user ${username}:`, `GitHub#getUserRepos`);
+            logger.error(`Error caught when getting repos for user ${username}:`, `GitHubUtil#getUserRepos`);
             logger.error(error);
             return undefined;
         }
@@ -30860,14 +30865,14 @@ class GitHubUtil {
         try {
             const res = await this.gh.paginate('GET /orgs/{org}/repos', { org, type: 'all' });
             if (res.length === 0) {
-                logger.error(`No repos found for org ${org}: ${JSON.stringify(res, null, 2)}`, `GitHub#getOrgRepos`);
+                logger.error(`No repos found for org ${org}: ${JSON.stringify(res, null, 2)}`, `GitHubUtil#getOrgRepos`);
                 return undefined;
             }
             else
                 return res;
         }
         catch (error) {
-            logger.error(`Error caught when getting repos for org ${org}:`, `GitHub#getOrgRepos`);
+            logger.error(`Error caught when getting repos for org ${org}:`, `GitHubUtil#getOrgRepos`);
             logger.error(error);
             return undefined;
         }
@@ -30891,7 +30896,7 @@ class GitHubUtil {
             }
         }
         catch (error) {
-            logger.error(`Error caught when getting repos for ${ownerType} ${owner}:`, `GitHub#getRepos`);
+            logger.error(`Error caught when getting repos for ${ownerType} ${owner}:`, `GitHubUtil#getRepos`);
             logger.error(error);
             return undefined;
         }
@@ -30908,7 +30913,7 @@ class GitHubUtil {
         try {
             const response = await this.gh.paginate('GET /repos/{owner}/{repo}/branches', { owner, repo });
             if (response.length === 0) {
-                logger.info(`${owner}/${repo} is an empty repository.`, `GitHub#getBranches`);
+                logger.info(`${owner}/${repo} is an empty repository.`, `GitHubUtil#getBranches`);
                 return undefined;
             }
             for (const branch of response) {
@@ -30922,16 +30927,115 @@ class GitHubUtil {
             }
         }
         catch (error) {
-            logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHub#getBranches`);
+            logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHubUtil#getBranches`);
             logger.error(error);
         }
         return branchesAndCommits;
     }
-    async getFlaggedBranches(branches, monthLimit) { }
+    /**
+     * Tries to find an issue for the flagged branch.
+     *
+     * @param flaggedBranch The flagged branch to find an issue for.
+     */
+    async findFlaggedBranchIssue(flaggedBranch) {
+        const flaggedBranchIssueTitle = getFlaggedBranchIssueTitle(flaggedBranch.branchName);
+        try {
+            const issues = await this.gh.paginate('GET /repos/{owner}/{repo}/issues', {
+                owner: flaggedBranch.repo.owner,
+                repo: flaggedBranch.repo.repo,
+                labels: 'stale-branch',
+            });
+            if (issues.length > 0) {
+                logger.info(`Found ${issues.length} stale-branch issues for ${flaggedBranch.branchName}.`, `GitHubUtil#findFlaggedBranchIssue`);
+                for (const issue of issues) {
+                    if (issue.title === flaggedBranchIssueTitle) {
+                        logger.info(`Found issue for flaggedBranch: ${issue.title}`, `GitHubUtil#findFlaggedBranchIssue`);
+                        logger.info(`Issue body: ${issue.body}`, `GitHubUtil#findFlaggedBranchIssue`);
+                        return issue;
+                    }
+                }
+            }
+            else {
+                logger.success(`No stale-branch issues for ${flaggedBranch.branchName}.`, `GitHubUtil#findFlaggedBranchIssue`);
+            }
+        }
+        catch (error) {
+            logger.error(`Error caught when getting issue:`, `GitHubUtil#findFlaggedBranchIssue`);
+            logger.error(error);
+        }
+    }
+    async getFlaggedBranches(cutoffDate) {
+        const flaggedBranches = [];
+        try {
+            const branchesAndCommits = await this.getBranchesAndLatestCommit(github.context.repo.owner, github.context.repo.repo);
+            if (branchesAndCommits && branchesAndCommits.length > 0) {
+                logger.debug(`${branchesAndCommits.length} branches found.`, 'GitHubUtil#getFlaggedBranches');
+                for (const { branch, commit } of branchesAndCommits) {
+                    logger.debug(`Processing branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches');
+                    const lastCommitDate = dayjs_min_default()(commit.committer?.date);
+                    // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
+                    if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
+                        logger.success(`Found a stale branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches');
+                        logger.success(`Last commit date: ${lastCommitDate.format('YYYY-MM-DD')}`, 'GitHubUtil#getFlaggedBranches');
+                        logger.success(`Cutoff date: ${cutoffDate.format('YYYY-MM-DD')}`, 'GitHubUtil#getFlaggedBranches');
+                        flaggedBranches.push({
+                            repo: github.context.repo,
+                            branchName: branch.name,
+                            lastCommitDate,
+                        });
+                    }
+                }
+            }
+        }
+        catch (error) {
+            logger.error('An error occurred while getting flagged branches:', 'GitHubUtil#getFlaggedBranches');
+            logger.error(error);
+        }
+        return flaggedBranches;
+    }
+    /**
+     * Creates a new issue for the flagged branch, indicating it's been marked for deletion. This is
+     * our primary mechanism for notifying the owners of the repository that a branch is set to be
+     * deleted.
+     *
+     * @param flaggedBranch The branch that has been flagged for deletion.
+     */
+    async createIssue({ branchName, lastCommitDate, repo }) {
+        try {
+            const issueBody = `
+      The ${branchName} branch has been flagged for deletion by the O11y-Stale-Branch-POC
+      Action as it has not received a commit since ${lastCommitDate.format('YYYY-MM-DD HH:mm:ssZ[Z]')}.
+      If nothing is done to address this, the branch will be deleted in 3 days.
+      `;
+            // const createRes = await this.gh.rest.issues.create({
+            //   owner: repo.owner,
+            //   repo: repo.repo,
+            //   title: `The ${branchName} branch is flagged for deletion.`,
+            //   body: issueBody,
+            //   labels: ['stale-branch'],
+            // })
+            // logger.success(
+            //   `Created issue for ${branchName}: ${createRes.data.html_url}`,
+            //   'GitHubUtil#createIssue',
+            // )
+            // return createRes
+            return this.gh.rest.issues.create({
+                owner: repo.owner,
+                repo: repo.repo,
+                title: `The ${branchName} branch is flagged for deletion.`,
+                body: issueBody,
+                labels: ['stale-branch'],
+            });
+        }
+        catch (error) {
+            logger.error('Error caught when creating issue:', 'GitHubUtil#createIssue');
+            logger.error(error);
+        }
+        return undefined;
+    }
 }
 
 ;// CONCATENATED MODULE: ./src/index.ts
-
 
 
 
@@ -30956,50 +31060,35 @@ function getActionsInput() {
     const token = core.getInput('github-token');
     return { cutoffDate, token };
 }
-async function getFlaggedBranches() {
-    const flaggedBranches = [];
-    try {
-        const { cutoffDate, token } = getActionsInput();
-        /** An instance the GitHub utility class for interacting with the GitHub API. */
-        const gh = new GitHubUtil(token);
-        const branchesAndCommits = await gh.getBranchesAndLatestCommit(github.context.repo.owner, github.context.repo.repo);
-        if (branchesAndCommits && branchesAndCommits.length > 0) {
-            logger.debug(`${branchesAndCommits.length} branches found.`, 'index#getFlaggedBranches');
-            for (const branch of branchesAndCommits) {
-                logger.debug(`Processing branch: ${branch.branch.name}`, 'index#getFlaggedBranches');
-                const lastCommitDate = dayjs_min_default()(branch.commit.committer?.date);
-                // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
-                if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
-                    logger.success(`Found a stale branch: ${branch.branch.name}`, 'index#getFlaggedBranches');
-                    logger.success(`Last commit date: ${lastCommitDate.format('YYYY-MM-DD')}`, 'index#getFlaggedBranches');
-                    logger.success(`Cutoff date: ${cutoffDate.format('YYYY-MM-DD')}`, 'index#getFlaggedBranches');
-                    flaggedBranches.push({
-                        repoName: github.context.repo.repo,
-                        branchName: branch.branch.name,
-                        lastCommitDate,
-                    });
-                }
-            }
-        }
-    }
-    catch (error) {
-        logger.error('An error occurred while getting flagged branches:', 'index#getFlaggedBranches');
-        logger.error(error);
-    }
-    return flaggedBranches;
-}
 async function run() {
     try {
-        const flaggedBranches = await getFlaggedBranches();
+        const { cutoffDate, token } = getActionsInput();
+        const gh = new GitHubUtil(token);
+        const flaggedBranches = await gh.getFlaggedBranches(cutoffDate);
         core.notice(`Flagged Branches Count: ${flaggedBranches.length || 0}`);
         logger.debug(`Flagged Branches Count: ${flaggedBranches.length || 0}`, 'index#run');
         if (flaggedBranches.length > 0) {
             for (const branch of flaggedBranches) {
                 core.notice(`Flagged Branch: ${branch.branchName}`);
                 logger.debug(`Flagged Branch: ${branch.branchName}`, 'index#run');
+                const issue = await gh.findFlaggedBranchIssue(branch);
+                if (issue) {
+                    logger.info(`Found issue for flagged branch: ${issue.title}`, 'index#run');
+                    logger.info(`Issue body: ${issue.body}`, 'index#run');
+                    // Since the issue has already been created, we need to check if it's been 3 days since it
+                    // was created. If so, then we're clear to delete the branch.
+                }
+                else {
+                    // Create the new issue for the flagged branch.
+                    // This issue is used to notify the owners that a branch is set to be deleted.
+                    const newIssue = await gh.createIssue(branch);
+                    logger.success(`Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`, 'index#run');
+                    logger.success('Issue details:', 'index#run');
+                    logger.success(JSON.stringify(newIssue?.data, null, 2), 'index#run');
+                }
             }
         }
-        core.info('Action completed successfully!');
+        logger.success('Action completed successfully!', 'index#run');
     }
     catch (error) {
         if (error instanceof Error)
