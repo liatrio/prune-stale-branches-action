@@ -8,7 +8,6 @@
   },
   "module": "src/index.ts",
   "scripts": {
-    "build": "tsc",
     "bundle": "npm run format:write && npm run package",
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
