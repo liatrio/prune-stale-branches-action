@@ -153,7 +153,7 @@ export class GitHubUtil {
    * @param flaggedBranch The flagged branch to find an issue for.
    */
   public async findFlaggedBranchIssue(flaggedBranch: FlaggedBranch) {
-    const flaggedBranchIssueTitle = getFlaggedBranchIssueTitle(flaggedBranch.branchName)
+    const flaggedBranchIssueTitle = `The ${flaggedBranch.branchName} branch is flagged for deletion.`
 
     try {
       const issues = await this.gh.paginate('GET /repos/{owner}/{repo}/issues', {
@@ -304,13 +304,24 @@ export class GitHubUtil {
    */
   public async deleteBranch({ branchName, repo }: FlaggedBranch) {
     try {
-      await this.gh.rest.git.deleteRef({
+      // await this.gh.rest.git.deleteRef({
+      //   owner: repo.owner,
+      //   repo: repo.repo,
+      //   ref: `heads/${branchName}`,
+      // })
+      // const res = await this.gh.request('DELETE /repos/{owner}/{repo}/git/refs/{ref}', {
+      //   owner: repo.owner,
+      //   repo: repo.repo,
+      //   ref: `heads/${branchName}`,
+      // })
+
+      // logger.success(`Deleted branch: ${branchName}`, 'GitHubUtil#deleteBranch')
+
+      return this.gh.request('DELETE /repos/{owner}/{repo}/git/refs/{ref}', {
         owner: repo.owner,
         repo: repo.repo,
         ref: `heads/${branchName}`,
       })
-
-      logger.success(`Deleted branch: ${branchName}`, 'GitHubUtil#deleteBranch')
     } catch (error) {
       logger.error('Error caught when deleting branch:', 'GitHubUtil#deleteBranch')
       logger.error(error)
