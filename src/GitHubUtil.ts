@@ -153,7 +153,7 @@ export class GitHubUtil {
    * @param flaggedBranch The flagged branch to find an issue for.
    */
   public async findFlaggedBranchIssue(flaggedBranch: FlaggedBranch) {
-    const flaggedBranchIssueTitle = getFlaggedBranchIssueTitle(flaggedBranch)
+    const flaggedBranchIssueTitle = getFlaggedBranchIssueTitle(flaggedBranch.branchName)
 
     try {
       const issues = await this.gh.paginate('GET /repos/{owner}/{repo}/issues', {
