@@ -1,16 +1,11 @@
 import * as core from '@actions/core'
 import { context } from '@actions/github'
-import Day from 'dayjs'
+import Day, { Dayjs} from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
+import { ActionsInput, FlaggedBranch } from './types.js'
 
-type FlaggedBranch = {
-  repoName: string
-  branchName: string
-  lastCommitDate: Day.Dayjs
-}
-
-function getActionsInput() {
+function getActionsInput(): ActionsInput {
   const staleBranchAgeInput = core.getInput('stale-branch-age')
   const staleBranchAgeSplit = staleBranchAgeInput.split(' ')
 
@@ -40,53 +35,13 @@ function getActionsInput() {
   return { cutoffDate, token }
 }
 
-async function getFlaggedBranches() {
-  const flaggedBranches: FlaggedBranch[] = []
-
+async function run() {
   try {
     const { cutoffDate, token } = getActionsInput()
 
-    /** An instance the GitHub utility class for interacting with the GitHub API. */
     const gh = new GitHubUtil(token)
 
-    const branchesAndCommits = await gh.getBranchesAndLatestCommit(
-      context.repo.owner,
-      context.repo.repo,
-    )
-
-    if (branchesAndCommits && branchesAndCommits.length > 0) {
-      logger.debug(`${branchesAndCommits.length} branches found.`, 'index#getFlaggedBranches')
-
-      for (const branch of branchesAndCommits) {
-        logger.debug(`Processing branch: ${branch.branch.name}`, 'index#getFlaggedBranches')
-
-        const lastCommitDate = Day(branch.commit.committer?.date)
-
-        // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
-        if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
-          logger.success(`Found a stale branch: ${branch.branch.name}`, 'index#getFlaggedBranches')
-          logger.success(`Last commit date: ${lastCommitDate.format('YYYY-MM-DD')}`, 'index#getFlaggedBranches')
-          logger.success(`Cutoff date: ${cutoffDate.format('YYYY-MM-DD')}`, 'index#getFlaggedBranches')
-
-          flaggedBranches.push({
-            repoName: context.repo.repo,
-            branchName: branch.branch.name,
-            lastCommitDate,
-          })
-        }
-      }
-    }
-  } catch (error) {
-    logger.error('An error occurred while getting flagged branches:', 'index#getFlaggedBranches')
-    logger.error(error)
-  }
-
-  return flaggedBranches
-}
-
-async function run() {
-  try {
-    const flaggedBranches = await getFlaggedBranches()
+    const flaggedBranches = await gh.getFlaggedBranches(cutoffDate)
 
     core.notice(`Flagged Branches Count: ${flaggedBranches.length || 0}`)
     logger.debug(`Flagged Branches Count: ${flaggedBranches.length || 0}`, 'index#run')
@@ -95,10 +50,28 @@ async function run() {
       for (const branch of flaggedBranches) {
         core.notice(`Flagged Branch: ${branch.branchName}`)
         logger.debug(`Flagged Branch: ${branch.branchName}`, 'index#run')
+
+        const issue = await gh.findFlaggedBranchIssue(branch)
+
+        if (issue) {
+          logger.info(`Found issue for flagged branch: ${issue.title}`, 'index#run')
+          logger.info(`Issue body: ${issue.body}`, 'index#run')
+
+          // Since the issue has already been created, we need to check if it's been 3 days since it
+          // was created. If so, then we're clear to delete the branch.
+        } else {
+          // Create the new issue for the flagged branch.
+          // This issue is used to notify the owners that a branch is set to be deleted.
+          const newIssue = await gh.createIssue(branch)
+
+          logger.success(`Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`, 'index#run')
+          logger.success('Issue details:', 'index#run')
+          logger.success(JSON.stringify(newIssue?.data, null, 2), 'index#run')
+        }
       }
     }
 
-    core.info('Action completed successfully!')
+    logger.success('Action completed successfully!', 'index#run')
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
 

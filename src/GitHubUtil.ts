@@ -1,20 +1,14 @@
-import { getOctokit } from '@actions/github'
+import { context, getOctokit } from '@actions/github'
 import { GitHub } from '@actions/github/lib/utils.js'
 import { composePaginateRest, paginateRest } from '@octokit/plugin-paginate-rest'
-import { type Endpoints } from '@octokit/types'
+import Day, { Dayjs } from 'dayjs'
 import { logger } from './Logger.js'
+import { BranchAndCommit, FlaggedBranch } from './types.js'
 
 /** A type that represents an object that contains both a branch and its last commit. */
-export type BranchAndCommit = {
-  /** The details available for a branch. */
-  branch: Endpoints['GET /repos/{owner}/{repo}/branches']['response']['data'][number]
-
-  /** The last commit made to the branch. */
-  commit: Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']['commit']
+function getFlaggedBranchIssueTitle(branchName: string) {
+  return `The ${branchName} branch is flagged for deletion.`
 }
-
-/** The response from the GitHub API when fetching repositories. */
-export type ReposResponse = Endpoints['GET /orgs/{org}/repos']['response']['data'][number]
 
 /**
  * A class with a few utility methods that simplify interacting with the GitHub REST API and the
@@ -46,12 +40,15 @@ export class GitHubUtil {
       const res = await this.gh.paginate('GET /users/{username}/repos', { username, type: 'owner' })
 
       if (res.length === 0) {
-        logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHub#getUserRepos`)
+        logger.error(`res: ${JSON.stringify(res, null, 2)}`, `GitHubUtil#getUserRepos`)
 
         throw new Error('Invalid response from GitHub')
       } else return res
     } catch (error) {
-      logger.error(`Error caught when getting repos for user ${username}:`, `GitHub#getUserRepos`)
+      logger.error(
+        `Error caught when getting repos for user ${username}:`,
+        `GitHubUtil#getUserRepos`,
+      )
       logger.error(error)
 
       return undefined
@@ -72,13 +69,13 @@ export class GitHubUtil {
       if (res.length === 0) {
         logger.error(
           `No repos found for org ${org}: ${JSON.stringify(res, null, 2)}`,
-          `GitHub#getOrgRepos`,
+          `GitHubUtil#getOrgRepos`,
         )
 
         return undefined
       } else return res
     } catch (error) {
-      logger.error(`Error caught when getting repos for org ${org}:`, `GitHub#getOrgRepos`)
+      logger.error(`Error caught when getting repos for org ${org}:`, `GitHubUtil#getOrgRepos`)
       logger.error(error)
 
       return undefined
@@ -103,7 +100,10 @@ export class GitHubUtil {
           return await this.getUserRepos(owner)
       }
     } catch (error) {
-      logger.error(`Error caught when getting repos for ${ownerType} ${owner}:`, `GitHub#getRepos`)
+      logger.error(
+        `Error caught when getting repos for ${ownerType} ${owner}:`,
+        `GitHubUtil#getRepos`,
+      )
       logger.error(error)
 
       return undefined
@@ -124,7 +124,7 @@ export class GitHubUtil {
       const response = await this.gh.paginate('GET /repos/{owner}/{repo}/branches', { owner, repo })
 
       if (response.length === 0) {
-        logger.info(`${owner}/${repo} is an empty repository.`, `GitHub#getBranches`)
+        logger.info(`${owner}/${repo} is an empty repository.`, `GitHubUtil#getBranches`)
 
         return undefined
       }
@@ -140,12 +140,150 @@ export class GitHubUtil {
         branchesAndCommits.push({ branch: branch, commit: commit.data.commit })
       }
     } catch (error) {
-      logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHub#getBranches`)
+      logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHubUtil#getBranches`)
       logger.error(error)
     }
 
     return branchesAndCommits
   }
 
-  public async getFlaggedBranches(branches: BranchAndCommit[], monthLimit: number) {}
+  /**
+   * Tries to find an issue for the flagged branch.
+   *
+   * @param flaggedBranch The flagged branch to find an issue for.
+   */
+  public async findFlaggedBranchIssue(flaggedBranch: FlaggedBranch) {
+    const flaggedBranchIssueTitle = getFlaggedBranchIssueTitle(flaggedBranch)
+
+    try {
+      const issues = await this.gh.paginate('GET /repos/{owner}/{repo}/issues', {
+        owner: flaggedBranch.repo.owner,
+        repo: flaggedBranch.repo.repo,
+        labels: 'stale-branch',
+      })
+
+      if (issues.length > 0) {
+        logger.info(
+          `Found ${issues.length} stale-branch issues for ${flaggedBranch.branchName}.`,
+          `GitHubUtil#findFlaggedBranchIssue`,
+        )
+
+        for (const issue of issues) {
+          if (issue.title === flaggedBranchIssueTitle) {
+            logger.info(
+              `Found issue for flaggedBranch: ${issue.title}`,
+              `GitHubUtil#findFlaggedBranchIssue`,
+            )
+            logger.info(`Issue body: ${issue.body}`, `GitHubUtil#findFlaggedBranchIssue`)
+
+            return issue
+          }
+        }
+      } else {
+        logger.success(
+          `No stale-branch issues for ${flaggedBranch.branchName}.`,
+          `GitHubUtil#findFlaggedBranchIssue`,
+        )
+      }
+    } catch (error) {
+      logger.error(`Error caught when getting issue:`, `GitHubUtil#findFlaggedBranchIssue`)
+      logger.error(error)
+    }
+  }
+
+  public async getFlaggedBranches(cutoffDate: Dayjs) {
+    const flaggedBranches: FlaggedBranch[] = []
+
+    try {
+      const branchesAndCommits = await this.getBranchesAndLatestCommit(
+        context.repo.owner,
+        context.repo.repo,
+      )
+
+      if (branchesAndCommits && branchesAndCommits.length > 0) {
+        logger.debug(
+          `${branchesAndCommits.length} branches found.`,
+          'GitHubUtil#getFlaggedBranches',
+        )
+
+        for (const { branch, commit } of branchesAndCommits) {
+          logger.debug(`Processing branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches')
+
+          const lastCommitDate = Day(commit.committer?.date)
+
+          // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
+          if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
+            logger.success(`Found a stale branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches')
+            logger.success(
+              `Last commit date: ${lastCommitDate.format('YYYY-MM-DD')}`,
+              'GitHubUtil#getFlaggedBranches',
+            )
+            logger.success(
+              `Cutoff date: ${cutoffDate.format('YYYY-MM-DD')}`,
+              'GitHubUtil#getFlaggedBranches',
+            )
+
+            flaggedBranches.push({
+              repo: context.repo,
+              branchName: branch.name,
+              lastCommitDate,
+            })
+          }
+        }
+      }
+    } catch (error) {
+      logger.error(
+        'An error occurred while getting flagged branches:',
+        'GitHubUtil#getFlaggedBranches',
+      )
+      logger.error(error)
+    }
+
+    return flaggedBranches
+  }
+
+  /**
+   * Creates a new issue for the flagged branch, indicating it's been marked for deletion. This is
+   * our primary mechanism for notifying the owners of the repository that a branch is set to be
+   * deleted.
+   *
+   * @param flaggedBranch The branch that has been flagged for deletion.
+   */
+  public async createIssue({ branchName, lastCommitDate, repo }: FlaggedBranch) {
+    try {
+      const issueBody = `
+      The ${branchName} branch has been flagged for deletion by the O11y-Stale-Branch-POC
+      Action as it has not received a commit since ${lastCommitDate.format('YYYY-MM-DD HH:mm:ssZ[Z]')}.
+      If nothing is done to address this, the branch will be deleted in 3 days.
+      `
+
+      // const createRes = await this.gh.rest.issues.create({
+      //   owner: repo.owner,
+      //   repo: repo.repo,
+      //   title: `The ${branchName} branch is flagged for deletion.`,
+      //   body: issueBody,
+      //   labels: ['stale-branch'],
+      // })
+
+      // logger.success(
+      //   `Created issue for ${branchName}: ${createRes.data.html_url}`,
+      //   'GitHubUtil#createIssue',
+      // )
+
+      // return createRes
+
+      return this.gh.rest.issues.create({
+        owner: repo.owner,
+        repo: repo.repo,
+        title: `The ${branchName} branch is flagged for deletion.`,
+        body: issueBody,
+        labels: ['stale-branch'],
+      })
+    } catch (error) {
+      logger.error('Error caught when creating issue:', 'GitHubUtil#createIssue')
+      logger.error(error)
+    }
+
+    return undefined
+  }
 }
