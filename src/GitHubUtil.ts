@@ -209,6 +209,16 @@ export class GitHubUtil {
         for (const { branch, commit } of branchesAndCommits) {
           logger.debug(`Processing branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches')
 
+          // Verify the branch is not protected.
+          if (branch.protected) {
+            logger.info(
+              `Skipping protected branch: ${branch.name}`,
+              'GitHubUtil#getFlaggedBranches',
+            )
+
+            continue
+          }
+
           const lastCommitDate = Day(commit.committer?.date)
 
           // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
@@ -285,5 +295,25 @@ export class GitHubUtil {
     }
 
     return undefined
+  }
+
+  /**
+   * Deletes the given branch from the repository.
+   *
+   * @param branch The branch to delete.
+   */
+  public async deleteBranch({ branchName, repo }: FlaggedBranch) {
+    try {
+      await this.gh.rest.git.deleteRef({
+        owner: repo.owner,
+        repo: repo.repo,
+        ref: `heads/${branchName}`,
+      })
+
+      logger.success(`Deleted branch: ${branchName}`, 'GitHubUtil#deleteBranch')
+    } catch (error) {
+      logger.error('Error caught when deleting branch:', 'GitHubUtil#deleteBranch')
+      logger.error(error)
+    }
   }
 }
