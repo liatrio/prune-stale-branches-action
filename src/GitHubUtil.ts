@@ -300,6 +300,39 @@ export class GitHubUtil {
     return undefined
   }
 
+  public async closeIssue(issueNumber: number, { owner, repo }: typeof context.repo) {
+    try {
+      // const closeRes = await this.gh.rest.issues.update({
+      //   owner: repo.owner,
+      //   repo: repo.repo,
+      //   issue_number: issueNumber,
+      //   state: 'closed',
+      // })
+
+      // logger.success(`Closed issue: ${issueNumber}`, 'GitHubUtil#closeIssue')
+
+      // return closeRes
+
+      await this.gh.rest.issues.createComment({
+        body: 'Closing this issue.',
+        issue_number: issueNumber,
+        owner,
+        repo,
+      })
+
+      return this.gh.rest.issues.update({
+        issue_number: issueNumber,
+        body: 'Closing this issue, in the update statement.',
+        state: 'closed',
+        owner,
+        repo,
+      })
+    } catch (error) {
+      logger.error('Error caught when closing issue:', 'GitHubUtil#closeIssue')
+      logger.error(error)
+    }
+  }
+
   /**
    * Deletes the given branch from the repository.
    *

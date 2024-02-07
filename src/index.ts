@@ -70,7 +70,18 @@ async function run() {
 
         logger.success(`Deleted flagged branch: ${branch.branchName}`, 'index#run')
 
+        const issueDelRes = await gh.closeIssue(issue.number, branch.repo)
+
+        logger.success(
+          `Closed issue for flagged branch: ${issueDelRes?.data?.title || 'Unknown'}`,
+          'index#run',
+        )
+
+        logger.debug('Branch deletion response:')
         logger.success(JSON.stringify(delRes?.data, null, 2), 'index#run')
+
+        logger.debug('Issue deletion response:')
+        logger.success(JSON.stringify(issueDelRes?.data, null, 2), 'index#run')
       } else {
         logger.info(
           `Issue has not been open for required amount of time. Skipping branch deletion: ${branch.branchName}`,
