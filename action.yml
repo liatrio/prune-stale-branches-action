@@ -21,6 +21,13 @@ inputs:
     required: true
     default: '30 days'
 
+  stale-branch-issue-age:
+    description: |
+      The amount and unit of time ([value] [unit]) to wait after creating a
+      deletion issue before actually deleting the branch. Default is "7 days".
+    required: true
+    default: '7 days'
+
 runs:
   using: node20
   main: dist/index.js
