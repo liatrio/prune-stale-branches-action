@@ -24,6 +24,29 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 
+# Package/build the dist/index.js file.
+bun run package
+
+# Check if there are any uncommitted changes.
+if [[ -n $(git status -s) ]]; then
+    # Echo that the packaged script has changes that haven't been comitted and then commit them.
+    echo -e "${RED}Uncommitted changes found${OFF}"
+
+    # Prompt the user to commit the changes
+    read -r -p 'Do you want to commit the changes? [y/N] ' response
+
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        # Commit the changes
+        git add dist/index.js
+        git commit -m "chore: added latest packaged script"
+        echo -e "${GREEN}Changes committed${OFF}"
+    else
+        # User chose not to commit the changes
+        echo -e "${RED}Changes not committed${OFF}"
+        exit 1
+    fi
+fi
+
 # Get the latest release tag
 latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
 
