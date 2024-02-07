@@ -10,6 +10,8 @@ function getFlaggedBranchIssueTitle(branchName: string) {
   return `The ${branchName} branch is flagged for deletion.`
 }
 
+const StandardDateFormat = 'YYYY-MM-DD HH:mm:ssZ[Z]'
+
 /**
  * A class with a few utility methods that simplify interacting with the GitHub REST API and the
  * data it returns.
@@ -259,13 +261,14 @@ export class GitHubUtil {
    *
    * @param flaggedBranch The branch that has been flagged for deletion.
    */
-  public async createIssue({ branchName, lastCommitDate, repo }: FlaggedBranch) {
+  public async createIssue({ branchName, lastCommitDate, repo }: FlaggedBranch, cutoffDate: Dayjs) {
     try {
-      const issueBody = `
-      The ${branchName} branch has been flagged for deletion by the O11y-Stale-Branch-POC
-      Action as it has not received a commit since ${lastCommitDate.format('YYYY-MM-DD HH:mm:ssZ[Z]')}.
-      If nothing is done to address this, the branch will be deleted in 3 days.
-      `
+      const newIssueBody: string[] = [
+        `The ${branchName} branch has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
+        '\n',
+        `- Last commit: ${lastCommitDate.format(StandardDateFormat)}.`,
+        `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
+      ]
 
       // const createRes = await this.gh.rest.issues.create({
       //   owner: repo.owner,
@@ -286,7 +289,7 @@ export class GitHubUtil {
         owner: repo.owner,
         repo: repo.repo,
         title: `The ${branchName} branch is flagged for deletion.`,
-        body: issueBody,
+        body: newIssueBody.join('\n'),
         labels: ['stale-branch'],
       })
     } catch (error) {

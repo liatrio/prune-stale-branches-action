@@ -1,66 +1,67 @@
 import * as core from '@actions/core'
-import Day from 'dayjs'
+import Day, { Dayjs } from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
 import { ActionsInput } from './types.js'
 
+/**
+ * Gets the input value with the given name and converts it to an instance of {@link Dayjs}. This is
+ * used on input values that are expected to be in the format of "<value> <unit>", such as
+ * "30 days". The resulting `Dayjs` instance is the date that is the given number of units before
+ * the current date.
+ *
+ * For example, providing `30 days` as the input value will return a `Dayjs` instance representing
+ * the date 30 days ago.
+ *
+ * @param inputName The name of the input to get the value for.
+ *
+ * @returns An instance of `Dayjs` representing the input value.
+ */
+function getInputAsDate(inputName: string): Dayjs {
+  const inputValue = core.getInput(inputName).split(' ')
+
+  if (inputValue.length !== 2) {
+    core.setFailed(`Invalid ${inputName} input. Must be in the format of "<value> <unit>".`)
+
+    throw new Error(`The ${inputName} input is in an invalid format.`)
+  }
+
+  const number = Number(inputValue[0])
+  const unit = inputValue[1] as Day.ManipulateType
+
+  return Day().subtract(number, unit)
+}
+
 function getActionsInput(): ActionsInput {
-  const staleBranchAgeInput = core.getInput('stale-branch-age')
-  const staleBranchAgeSplit = staleBranchAgeInput.split(' ')
-
-  if (staleBranchAgeSplit.length !== 2) {
-    core.setFailed(
-      'Invalid stale-branch-age input. Must be in the format of "<value> <unit>". Eg: "30 days".',
-    )
-
-    throw new Error('Invalid stale-branch-age input.')
-  }
-
-  const staleBranchAge = {
-    number: Number(staleBranchAgeSplit[0]),
-    unit: staleBranchAgeSplit[1] as Day.ManipulateType,
-  }
-
-  logger.debug(`Parsed staleBranchAge: ${JSON.stringify(staleBranchAge, null, 2)}`, 'index#run')
-
-  /**
-   * The date that determines how long a branch must go without activity to be considered stale.
-   */
-  const cutoffDate = Day().subtract(staleBranchAge.number, staleBranchAge.unit)
-
-  /** The personal access token used for authenticating with the GitHub API. */
+  const branchCutoffDate = getInputAsDate('stale-branch-age')
+  const issueCutoffDate = getInputAsDate('stale-branch-issue-age')
   const token = core.getInput('github-token')
 
-  return { cutoffDate, token }
+  return { branchCutoffDate, token, issueCutoffDate }
 }
 
 async function run() {
   try {
-    const { cutoffDate, token } = getActionsInput()
+    const { branchCutoffDate, issueCutoffDate, token } = getActionsInput()
 
     const gh = new GitHubUtil(token)
 
-    const flaggedBranches = await gh.getFlaggedBranches(cutoffDate)
+    const flaggedBranches = await gh.getFlaggedBranches(branchCutoffDate)
 
-    core.notice(`Flagged Branches Count: ${flaggedBranches.length || 0}`)
-    logger.debug(`Flagged Branches Count: ${flaggedBranches.length || 0}`, 'index#run')
+    core.debug(`Found ${flaggedBranches.length || 0} branches that are flagged for deletion.`)
 
     for (const branch of flaggedBranches) {
-      core.notice(`Flagged Branch: ${branch.branchName}`)
-      logger.debug(`Flagged Branch: ${branch.branchName}`, 'index#run')
+      core.debug(`Processing flagged branch: ${branch.branchName}`)
 
       const issue = await gh.findFlaggedBranchIssue(branch)
 
       if (issue) {
-        logger.info(`Found issue for flagged branch: ${issue.title}`, 'index#run')
-        logger.info(`Issue body: ${issue.body}`, 'index#run')
+        core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`)
 
-        // Since the issue has already been created, we need to check if it's been 3 days since it
-        // was created. If so, then we're clear to delete the branch.
         const creationDate = Day(issue.created_at)
-        const daysSinceCreation = Day().diff(creationDate, 'day')
 
-        if (daysSinceCreation >= 3) {
+        // Check if the issue was created after the issue cutoff date.
+        if (issueCutoffDate.isAfter(creationDate)) {
           // Delete the branch.
           const delRes = await gh.deleteBranch(branch)
 
@@ -69,21 +70,20 @@ async function run() {
           logger.success(JSON.stringify(delRes?.data, null, 2), 'index#run')
         } else {
           logger.info(
-            `Issue has not been open for 3 days. Skipping branch deletion: ${branch.branchName}`,
+            `Issue has not been open for required amount of time. Skipping branch deletion: ${branch.branchName}`,
             'index#run',
           )
         }
       } else {
-        // Create the new issue for the flagged branch.
-        // This issue is used to notify the owners that a branch is set to be deleted.
-        const newIssue = await gh.createIssue(branch)
+        core.debug('No deletion issue found for flagged branch.')
+
+        const newIssue = await gh.createIssue(branch, issueCutoffDate)
 
         logger.success(
           `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,
           'index#run',
         )
-        logger.success('Issue details:', 'index#run')
-        logger.success(JSON.stringify(newIssue?.data, null, 2), 'index#run')
+        logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run')
       }
     }
 
