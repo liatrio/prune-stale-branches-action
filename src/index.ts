@@ -41,58 +41,57 @@ function getActionsInput(): ActionsInput {
 }
 
 async function run() {
-  try {
-    const { branchCutoffDate, issueCutoffDate, token } = getActionsInput()
+  const { branchCutoffDate, issueCutoffDate, token } = getActionsInput()
 
-    const gh = new GitHubUtil(token)
+  const gh = new GitHubUtil(token)
 
-    const flaggedBranches = await gh.getFlaggedBranches(branchCutoffDate)
+  const flaggedBranches = await gh.getFlaggedBranches(branchCutoffDate)
 
-    core.debug(`Found ${flaggedBranches.length || 0} branches that are flagged for deletion.`)
+  core.debug(`Found ${flaggedBranches.length || 0} branches that are flagged for deletion.`)
 
-    for (const branch of flaggedBranches) {
-      core.debug(`Processing flagged branch: ${branch.branchName}`)
+  for (const branch of flaggedBranches) {
+    core.debug(`Processing flagged branch: ${branch.branchName}`)
 
-      const issue = await gh.findFlaggedBranchIssue(branch)
+    const issue = await gh.findFlaggedBranchIssue(branch)
 
-      if (issue) {
-        core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`)
+    if (issue) {
+      core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`)
 
-        const creationDate = Day(issue.created_at)
+      const creationDate = Day(issue.created_at)
 
-        // Check if the issue was created after the issue cutoff date.
-        if (issueCutoffDate.isAfter(creationDate)) {
-          // Delete the branch.
-          const delRes = await gh.deleteBranch(branch)
+      // Check if the issue was created after the issue cutoff date.
+      if (issueCutoffDate.isAfter(creationDate)) {
+        // Delete the branch.
+        const delRes = await gh.deleteBranch(branch)
 
-          logger.success(`Deleted flagged branch: ${branch.branchName}`, 'index#run')
+        logger.success(`Deleted flagged branch: ${branch.branchName}`, 'index#run')
 
-          logger.success(JSON.stringify(delRes?.data, null, 2), 'index#run')
-        } else {
-          logger.info(
-            `Issue has not been open for required amount of time. Skipping branch deletion: ${branch.branchName}`,
-            'index#run',
-          )
-        }
+        logger.success(JSON.stringify(delRes?.data, null, 2), 'index#run')
       } else {
-        core.debug('No deletion issue found for flagged branch.')
-
-        const newIssue = await gh.createIssue(branch, issueCutoffDate)
-
-        logger.success(
-          `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,
+        logger.info(
+          `Issue has not been open for required amount of time. Skipping branch deletion: ${branch.branchName}`,
           'index#run',
         )
-        logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run')
       }
+    } else {
+      core.debug('No deletion issue found for flagged branch.')
+
+      const newIssue = await gh.createIssue(branch, issueCutoffDate)
+
+      logger.success(
+        `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,
+        'index#run',
+      )
+      logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run')
     }
-
-    logger.success('Action completed successfully!', 'index#run')
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
-
-    core.setFailed('An error occurred, check logs for more information.')
   }
+
+  logger.success('Action completed successfully!', 'index#run')
 }
 
-run()
+run().catch(err => {
+  if (err instanceof Error) core.setFailed(err.message)
+
+  core.setFailed('An error occurred, check logs for more information.')
+})
+
