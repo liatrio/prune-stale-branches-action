@@ -3,7 +3,7 @@ import { GitHub } from '@actions/github/lib/utils.js'
 import { composePaginateRest, paginateRest } from '@octokit/plugin-paginate-rest'
 import Day, { Dayjs } from 'dayjs'
 import { logger } from './Logger.js'
-import { BranchAndCommit, FlaggedBranch } from './types.js'
+import { BranchAndCommit, FlaggedBranch } from './Types.js'
 
 /** A type that represents an object that contains both a branch and its last commit. */
 function getFlaggedBranchIssueTitle(branchName: string) {

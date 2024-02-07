@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import Day, { Dayjs } from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
-import { ActionsInput } from './types.js'
+import { ActionsInput } from './Types.js'
 
 /**
  * Gets the input value with the given name and converts it to an instance of {@link Dayjs}. This is
