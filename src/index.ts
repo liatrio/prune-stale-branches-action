@@ -1,23 +1,21 @@
 import * as core from '@actions/core'
-import Day, { Dayjs } from 'dayjs'
+import Day, { Dayjs, ManipulateType } from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
 import { ActionsInput } from './Types.js'
 
 /**
- * Gets the input value with the given name and converts it to an instance of {@link Dayjs}. This is
- * used on input values that are expected to be in the format of "<value> <unit>", such as
- * "30 days". The resulting `Dayjs` instance is the date that is the given number of units before
- * the current date.
- *
- * For example, providing `30 days` as the input value will return a `Dayjs` instance representing
- * the date 30 days ago.
+ * Creates an instance of `Dayjs` with the value of the input with the given name, in the format of
+ * `<value> <unit>`, and performs the given operation on the date. For example, if the input
+ * `stale-branch-age` has a value of `3 days` and the operation is `past`, the date will be 3 days
+ * in the past.
  *
  * @param inputName The name of the input to get the value for.
+ * @param direction The direction to manipulate the date.
  *
- * @returns An instance of `Dayjs` representing the input value.
+ * @returns A `Dayjs` instance with the date value.
  */
-function getInputAsDate(inputName: string): Dayjs {
+function getInputAsDate(inputName: string, direction: 'future' | 'past'): Dayjs {
   const inputValue = core.getInput(inputName).split(' ')
 
   if (inputValue.length !== 2) {
@@ -26,18 +24,28 @@ function getInputAsDate(inputName: string): Dayjs {
     throw new Error(`The ${inputName} input is in an invalid format.`)
   }
 
-  const number = Number(inputValue[0])
-  const unit = inputValue[1] as Day.ManipulateType
+  const inputNumber = Number(inputValue[0])
+  const inputUnit = inputValue[1] as ManipulateType
 
-  return Day().subtract(number, unit)
+  switch (direction) {
+    case 'future':
+      return Day().add(inputNumber, inputUnit)
+    case 'past':
+      return Day().subtract(inputNumber, inputUnit)
+  }
 }
 
+/**
+ * Gets the input values from the GitHub Action and returns them as an object.
+ *
+ * @returns An object containing the input values for the GitHub Action.
+ */
 function getActionsInput(): ActionsInput {
-  const branchCutoffDate = getInputAsDate('stale-branch-age')
-  const issueCutoffDate = getInputAsDate('stale-branch-issue-age')
   const token = core.getInput('github-token')
+  const branchCutoffDate = getInputAsDate('stale-branch-age', 'past')
+  const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'future')
 
-  return { branchCutoffDate, token, issueCutoffDate }
+  return { branchCutoffDate, issueCutoffDate, token }
 }
 
 async function run() {
@@ -105,4 +113,3 @@ run().catch(err => {
 
   core.setFailed('An error occurred, check logs for more information.')
 })
-
