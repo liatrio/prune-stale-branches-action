@@ -271,7 +271,7 @@ export class GitHubUtil {
         '\n',
         `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
         `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
-        `- Last commit by: ${lastCommit.committer?.name} <${lastCommit.committer?.email}>.`,
+        `- Last commit by: ${lastCommit.committer?.name || 'Unknown'}.`,
         `- Last commit on: ${Day(lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
         `- Last commit URL: ${lastCommit.html_url}`,
         '\n',
