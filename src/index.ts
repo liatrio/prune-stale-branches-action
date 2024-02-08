@@ -55,10 +55,6 @@ async function run() {
     const issue = await gh.findFlaggedBranchIssue(branch)
 
     if (issue) {
-      logger.debug(`Issue reactions:`)
-      logger.debug(JSON.stringify(issue.reactions))
-      logger.debug(`There are ${issue.reactions?.['+1']} +1 reactions on the issue.`, 'index#run')
-
       core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`)
 
       const creationDate = Day(issue.created_at)
