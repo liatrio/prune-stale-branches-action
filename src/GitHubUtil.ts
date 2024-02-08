@@ -5,6 +5,10 @@ import Day, { Dayjs } from 'dayjs'
 import { logger } from './Logger.js'
 import { BranchAndCommit, FlaggedBranch } from './Types.js'
 
+function getFlaggedBranchIssueTitle(branchName: string) {
+  return `The branch \`${branchName}\` has been flagged for deletion`
+}
+
 const StandardDateFormat = 'YYYY-MM-DD HH:mm:ssZ[Z]'
 
 /**
@@ -150,8 +154,6 @@ export class GitHubUtil {
    * @param flaggedBranch The flagged branch to find an issue for.
    */
   public async findFlaggedBranchIssue(flaggedBranch: FlaggedBranch) {
-    const flaggedBranchIssueTitle = `The ${flaggedBranch.branchName} branch is flagged for deletion.`
-
     try {
       const issues = await this.gh.paginate('GET /repos/{owner}/{repo}/issues', {
         owner: flaggedBranch.repo.owner,
@@ -167,7 +169,7 @@ export class GitHubUtil {
         )
 
         for (const issue of issues) {
-          if (issue.title === flaggedBranchIssueTitle) {
+          if (issue.title === getFlaggedBranchIssueTitle(flaggedBranch.branchName)) {
             logger.info(
               `Found issue for flaggedBranch: ${issue.title}`,
               `GitHubUtil#findFlaggedBranchIssue`,
@@ -282,7 +284,7 @@ export class GitHubUtil {
       return this.gh.rest.issues.create({
         owner: repo.owner,
         repo: repo.repo,
-        title: `The ${branchName} branch is flagged for deletion.`,
+        title: getFlaggedBranchIssueTitle(branchName),
         body: newIssueBody.join('\n'),
         labels: ['stale-branch'],
       })
