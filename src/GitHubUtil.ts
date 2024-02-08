@@ -261,6 +261,9 @@ export class GitHubUtil {
    * deleted.
    *
    * @param flaggedBranch The branch that has been flagged for deletion.
+   * @param cutoffDate The date that the issue will be open until before the branch is deleted.
+   *
+   * @returns The response from the GitHub API when creating the issue.
    */
   public async createIssue({ branchName, lastCommitDate, repo }: FlaggedBranch, cutoffDate: Dayjs) {
     try {
@@ -270,21 +273,6 @@ export class GitHubUtil {
         `- Last commit: ${lastCommitDate.format(StandardDateFormat)}.`,
         `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
       ]
-
-      // const createRes = await this.gh.rest.issues.create({
-      //   owner: repo.owner,
-      //   repo: repo.repo,
-      //   title: `The ${branchName} branch is flagged for deletion.`,
-      //   body: issueBody,
-      //   labels: ['stale-branch'],
-      // })
-
-      // logger.success(
-      //   `Created issue for ${branchName}: ${createRes.data.html_url}`,
-      //   'GitHubUtil#createIssue',
-      // )
-
-      // return createRes
 
       return this.gh.rest.issues.create({
         owner: repo.owner,
