@@ -134,7 +134,7 @@ export class GitHubUtil {
           ref: branch.commit.sha,
         })
 
-        branchesAndCommits.push({ branch: branch, commit: commit.data.commit })
+        branchesAndCommits.push({ branch: branch, commit: commit.data })
       }
     } catch (error) {
       logger.error(`Error caught when getting branches for repo ${repo}:`, `GitHubUtil#getBranches`)
@@ -157,7 +157,7 @@ export class GitHubUtil {
         owner: flaggedBranch.repo.owner,
         repo: flaggedBranch.repo.repo,
         labels: 'stale-branch',
-        state: 'open'
+        state: 'open',
       })
 
       if (issues.length > 0) {
@@ -217,7 +217,7 @@ export class GitHubUtil {
             continue
           }
 
-          const lastCommitDate = Day(commit.committer?.date)
+          const lastCommitDate = Day(commit.commit.committer?.date)
 
           // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
           if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
@@ -234,7 +234,7 @@ export class GitHubUtil {
             flaggedBranches.push({
               repo: context.repo,
               branchName: branch.name,
-              lastCommitDate,
+              lastCommit: commit,
             })
           }
         }
@@ -260,15 +260,23 @@ export class GitHubUtil {
    *
    * @returns The response from the GitHub API when creating the issue.
    */
-  public async createIssue({ branchName, lastCommitDate, repo }: FlaggedBranch, cutoffDate: Dayjs) {
+  public async createIssue({ branchName, lastCommit, repo }: FlaggedBranch, cutoffDate: Dayjs) {
     try {
       const newIssueBody: string[] = [
-        `The branch \`${branchName}\` has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
+        '# Stale Branch Deletion Notice',
         '\n',
-        '## Branch Details',
-        `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
-        `- Last commit: ${lastCommitDate.format(StandardDateFormat)}.`,
+        `The branch [\`${branchName}\`][0] has been flagged for deletion by the [O11y-Stale-Branch-POC Action][1] due to a lack of activity.`,
+        '\n',
+        '## Further Details',
+        '\n',
         `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
+        `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
+        `- Last commit by: ${lastCommit.committer?.name} <${lastCommit.committer?.email}>.`,
+        `- Last commit on: ${Day(lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
+        `- Last commit URL: ${lastCommit.html_url}`,
+        '\n',
+        `[0]: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
+        `[1]: https://github.com/liatrio/O11y-Stale-Branch-POC`,
       ]
 
       return this.gh.rest.issues.create({

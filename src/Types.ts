@@ -2,11 +2,8 @@ import { context } from '@actions/github'
 import { type Endpoints } from '@octokit/types'
 import { Dayjs } from 'dayjs'
 
-export type FlaggedBranch = {
-  repo: typeof context.repo
-  branchName: string
-  lastCommitDate: Dayjs
-}
+export type CommitResponse =
+  Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']
 
 export type ActionsInput = {
   /**
@@ -31,7 +28,7 @@ export type BranchAndCommit = {
   branch: Endpoints['GET /repos/{owner}/{repo}/branches']['response']['data'][number]
 
   /** The last commit made to the branch. */
-  commit: Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']['commit']
+  commit: Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']
 }
 
 /** The response from the GitHub API when fetching issues. */
@@ -40,3 +37,10 @@ export type IssuesResponse =
 
 /** The response from the GitHub API when fetching repositories. */
 export type ReposResponse = Endpoints['GET /orgs/{org}/repos']['response']['data'][number]
+
+export type FlaggedBranch = {
+  repo: typeof context.repo
+  branchName: string
+  // lastCommitDate: Dayjs
+  lastCommit: CommitResponse
+}
