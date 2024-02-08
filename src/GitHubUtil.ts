@@ -268,8 +268,10 @@ export class GitHubUtil {
   public async createIssue({ branchName, lastCommitDate, repo }: FlaggedBranch, cutoffDate: Dayjs) {
     try {
       const newIssueBody: string[] = [
-        `The ${branchName} branch has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
+        `The branch \`${branchName}\` has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
         '\n',
+        '## Branch Details',
+        `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
         `- Last commit: ${lastCommitDate.format(StandardDateFormat)}.`,
         `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
       ]
