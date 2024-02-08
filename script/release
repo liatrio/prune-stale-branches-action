@@ -10,13 +10,13 @@
 # This script will do the following:
 #
 # 1. Get the latest release tag
-# 2. Prompt the user for a new release tag
+# 2. Prompt the user for a new release tag if not provided as an argument
 # 3. Tag the new release
 # 4. Push the new tag to the remote
 #
 # Usage:
 #
-# script/release
+# script/release [new_tag]
 
 # Terminal colors
 OFF='\033[0m'
@@ -62,8 +62,13 @@ fi
 # Display the latest release tag
 echo -e "The latest release tag is: ${BLUE}${latest_tag}${OFF}"
 
-# Prompt the user for the new release tag
-read -r -p 'Enter a new release tag (vX.X.X format): ' new_tag
+# Check if new_tag is provided as an argument
+if [[ -n "$1" ]]; then
+    new_tag="$1"
+else
+    # Prompt the user for the new release tag
+    read -r -p 'Enter a new release tag (vX.X.X format): ' new_tag
+fi
 
 # Validate the new release tag
 tag_regex='v[0-9]+\.[0-9]+\.[0-9]+$'
