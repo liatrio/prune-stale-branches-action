@@ -162,6 +162,7 @@ export class GitHubUtil {
         owner: flaggedBranch.repo.owner,
         repo: flaggedBranch.repo.repo,
         labels: 'stale-branch',
+        state: 'open'
       })
 
       if (issues.length > 0) {
