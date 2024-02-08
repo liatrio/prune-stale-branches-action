@@ -31040,6 +31040,35 @@ class GitHubUtil {
         }
         return undefined;
     }
+    async closeIssue(issueNumber, { owner, repo }) {
+        try {
+            // const closeRes = await this.gh.rest.issues.update({
+            //   owner: repo.owner,
+            //   repo: repo.repo,
+            //   issue_number: issueNumber,
+            //   state: 'closed',
+            // })
+            // logger.success(`Closed issue: ${issueNumber}`, 'GitHubUtil#closeIssue')
+            // return closeRes
+            await this.gh.rest.issues.createComment({
+                body: 'Closing this issue.',
+                issue_number: issueNumber,
+                owner,
+                repo,
+            });
+            return this.gh.rest.issues.update({
+                issue_number: issueNumber,
+                body: 'Closing this issue, in the update statement.',
+                state: 'closed',
+                owner,
+                repo,
+            });
+        }
+        catch (error) {
+            logger.error('Error caught when closing issue:', 'GitHubUtil#closeIssue');
+            logger.error(error);
+        }
+    }
     /**
      * Deletes the given branch from the repository.
      *
@@ -31124,7 +31153,12 @@ async function run() {
                 // Delete the branch.
                 const delRes = await gh.deleteBranch(branch);
                 logger.success(`Deleted flagged branch: ${branch.branchName}`, 'index#run');
+                const issueDelRes = await gh.closeIssue(issue.number, branch.repo);
+                logger.success(`Closed issue for flagged branch: ${issueDelRes?.data?.title || 'Unknown'}`, 'index#run');
+                logger.debug('Branch deletion response:');
                 logger.success(JSON.stringify(delRes?.data, null, 2), 'index#run');
+                logger.debug('Issue deletion response:');
+                logger.success(JSON.stringify(issueDelRes?.data, null, 2), 'index#run');
             }
             else {
                 logger.info(`Issue has not been open for required amount of time. Skipping branch deletion: ${branch.branchName}`, 'index#run');
