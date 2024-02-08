@@ -30811,10 +30811,6 @@ const logger = new Logger();
 
 
 
-/** A type that represents an object that contains both a branch and its last commit. */
-function getFlaggedBranchIssueTitle(branchName) {
-    return `The ${branchName} branch is flagged for deletion.`;
-}
 const StandardDateFormat = 'YYYY-MM-DD HH:mm:ssZ[Z]';
 /**
  * A class with a few utility methods that simplify interacting with the GitHub REST API and the
@@ -30924,7 +30920,7 @@ class GitHubUtil {
                     repo,
                     ref: branch.commit.sha,
                 });
-                branchesAndCommits.push({ branch: branch, commit: commit.data.commit });
+                branchesAndCommits.push({ branch: branch, commit: commit.data });
             }
         }
         catch (error) {
@@ -30945,7 +30941,7 @@ class GitHubUtil {
                 owner: flaggedBranch.repo.owner,
                 repo: flaggedBranch.repo.repo,
                 labels: 'stale-branch',
-                state: 'open'
+                state: 'open',
             });
             if (issues.length > 0) {
                 logger.info(`Found ${issues.length} stale-branch issues for ${flaggedBranch.branchName}.`, `GitHubUtil#findFlaggedBranchIssue`);
@@ -30979,7 +30975,7 @@ class GitHubUtil {
                         logger.info(`Skipping protected branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches');
                         continue;
                     }
-                    const lastCommitDate = dayjs_min_default()(commit.committer?.date);
+                    const lastCommitDate = dayjs_min_default()(commit.commit.committer?.date);
                     // Verify the `lastCommitDate` is valid and after the `cutoffDate`.
                     if (lastCommitDate.isValid() && cutoffDate.isAfter(lastCommitDate)) {
                         logger.success(`Found a stale branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches');
@@ -30988,7 +30984,7 @@ class GitHubUtil {
                         flaggedBranches.push({
                             repo: github.context.repo,
                             branchName: branch.name,
-                            lastCommitDate,
+                            lastCommit: commit,
                         });
                     }
                 }
@@ -31010,15 +31006,23 @@ class GitHubUtil {
      *
      * @returns The response from the GitHub API when creating the issue.
      */
-    async createIssue({ branchName, lastCommitDate, repo }, cutoffDate) {
+    async createIssue({ branchName, lastCommit, repo }, cutoffDate) {
         try {
             const newIssueBody = [
-                `The branch \`${branchName}\` has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
+                '# Stale Branch Deletion Notice',
                 '\n',
-                '## Branch Details',
-                `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
-                `- Last commit: ${lastCommitDate.format(StandardDateFormat)}.`,
+                `The branch [\`${branchName}\`][0] has been flagged for deletion by the [O11y-Stale-Branch-POC Action][1] due to a lack of activity.`,
+                '\n',
+                '## Further Details',
+                '\n',
                 `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
+                `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
+                `- Last commit by: ${lastCommit.committer?.name} <${lastCommit.committer?.email}>.`,
+                `- Last commit on: ${dayjs_min_default()(lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
+                `- Last commit URL: ${lastCommit.html_url}`,
+                '\n',
+                `[0]: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
+                `[1]: https://github.com/liatrio/O11y-Stale-Branch-POC`,
             ];
             return this.gh.rest.issues.create({
                 owner: repo.owner,
