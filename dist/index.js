@@ -30811,6 +30811,9 @@ const logger = new Logger();
 
 
 
+function getFlaggedBranchIssueTitle(branchName) {
+    return `The branch \`${branchName}\` has been flagged for deletion`;
+}
 const StandardDateFormat = 'YYYY-MM-DD HH:mm:ssZ[Z]';
 /**
  * A class with a few utility methods that simplify interacting with the GitHub REST API and the
@@ -30935,7 +30938,6 @@ class GitHubUtil {
      * @param flaggedBranch The flagged branch to find an issue for.
      */
     async findFlaggedBranchIssue(flaggedBranch) {
-        const flaggedBranchIssueTitle = `The ${flaggedBranch.branchName} branch is flagged for deletion.`;
         try {
             const issues = await this.gh.paginate('GET /repos/{owner}/{repo}/issues', {
                 owner: flaggedBranch.repo.owner,
@@ -30946,7 +30948,7 @@ class GitHubUtil {
             if (issues.length > 0) {
                 logger.info(`Found ${issues.length} stale-branch issues for ${flaggedBranch.branchName}.`, `GitHubUtil#findFlaggedBranchIssue`);
                 for (const issue of issues) {
-                    if (issue.title === flaggedBranchIssueTitle) {
+                    if (issue.title === getFlaggedBranchIssueTitle(flaggedBranch.branchName)) {
                         logger.info(`Found issue for flaggedBranch: ${issue.title}`, `GitHubUtil#findFlaggedBranchIssue`);
                         logger.info(`Issue body: ${issue.body}`, `GitHubUtil#findFlaggedBranchIssue`);
                         return issue;
@@ -31027,7 +31029,7 @@ class GitHubUtil {
             return this.gh.rest.issues.create({
                 owner: repo.owner,
                 repo: repo.repo,
-                title: `The ${branchName} branch is flagged for deletion.`,
+                title: getFlaggedBranchIssueTitle(branchName),
                 body: newIssueBody.join('\n'),
                 labels: ['stale-branch'],
             });
