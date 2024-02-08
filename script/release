@@ -33,7 +33,10 @@ if [[ -n $(git status -s) ]]; then
     echo -e "${RED}Uncommitted changes found${OFF}"
 
     # Prompt the user to commit the changes
-    read -r -p 'Do you want to commit the changes? [y/N] ' response
+    read -r -p 'Do you want to commit the changes? [Y/n] ' response
+
+    # Set default value to 'Y' if no response is provided
+    response=${response:-Y}
 
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         # Commit the changes
