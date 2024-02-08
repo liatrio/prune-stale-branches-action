@@ -30945,6 +30945,7 @@ class GitHubUtil {
                 owner: flaggedBranch.repo.owner,
                 repo: flaggedBranch.repo.repo,
                 labels: 'stale-branch',
+                state: 'open'
             });
             if (issues.length > 0) {
                 logger.info(`Found ${issues.length} stale-branch issues for ${flaggedBranch.branchName}.`, `GitHubUtil#findFlaggedBranchIssue`);
@@ -31005,27 +31006,20 @@ class GitHubUtil {
      * deleted.
      *
      * @param flaggedBranch The branch that has been flagged for deletion.
+     * @param cutoffDate The date that the issue will be open until before the branch is deleted.
+     *
+     * @returns The response from the GitHub API when creating the issue.
      */
     async createIssue({ branchName, lastCommitDate, repo }, cutoffDate) {
         try {
             const newIssueBody = [
-                `The ${branchName} branch has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
+                `The branch \`${branchName}\` has been flagged for deletion by the O11y-Stale-Branch-POC Action.`,
                 '\n',
+                '## Branch Details',
+                `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
                 `- Last commit: ${lastCommitDate.format(StandardDateFormat)}.`,
                 `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
             ];
-            // const createRes = await this.gh.rest.issues.create({
-            //   owner: repo.owner,
-            //   repo: repo.repo,
-            //   title: `The ${branchName} branch is flagged for deletion.`,
-            //   body: issueBody,
-            //   labels: ['stale-branch'],
-            // })
-            // logger.success(
-            //   `Created issue for ${branchName}: ${createRes.data.html_url}`,
-            //   'GitHubUtil#createIssue',
-            // )
-            // return createRes
             return this.gh.rest.issues.create({
                 owner: repo.owner,
                 repo: repo.repo,
@@ -31143,9 +31137,6 @@ async function run() {
         core.debug(`Processing flagged branch: ${branch.branchName}`);
         const issue = await gh.findFlaggedBranchIssue(branch);
         if (issue) {
-            logger.debug(`Issue reactions:`);
-            logger.debug(JSON.stringify(issue.reactions));
-            logger.debug(`There are ${issue.reactions?.['+1']} +1 reactions on the issue.`, 'index#run');
             core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`);
             const creationDate = dayjs_min_default()(issue.created_at);
             // Check if the issue was created after the issue cutoff date.
