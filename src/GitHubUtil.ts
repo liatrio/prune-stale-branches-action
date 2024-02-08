@@ -5,11 +5,6 @@ import Day, { Dayjs } from 'dayjs'
 import { logger } from './Logger.js'
 import { BranchAndCommit, FlaggedBranch } from './Types.js'
 
-/** A type that represents an object that contains both a branch and its last commit. */
-function getFlaggedBranchIssueTitle(branchName: string) {
-  return `The ${branchName} branch is flagged for deletion.`
-}
-
 const StandardDateFormat = 'YYYY-MM-DD HH:mm:ssZ[Z]'
 
 /**
