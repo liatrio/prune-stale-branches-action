@@ -15,6 +15,7 @@ export const nodeSDK = new NodeSDK({
     exporter: new OTLPMetricExporter(),
   }),
   instrumentations: [getNodeAutoInstrumentations()],
+  serviceName: 'stale-branch-cleaner',
 })
 
 /**
