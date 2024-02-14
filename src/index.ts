@@ -1,13 +1,13 @@
 import * as core from '@actions/core'
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc'
+import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
+import { NodeSDK } from '@opentelemetry/sdk-node'
 import Day, { Dayjs, ManipulateType } from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
 import { ActionsInput } from './Types.js'
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 
 export const nodeSDK = new NodeSDK({
   traceExporter: new OTLPTraceExporter(),
@@ -15,7 +15,7 @@ export const nodeSDK = new NodeSDK({
     exporter: new OTLPMetricExporter(),
   }),
   instrumentations: [getNodeAutoInstrumentations()],
-});
+})
 
 /**
  * Creates an instance of `Dayjs` with the value of the input with the given name, in the format of
@@ -121,8 +121,10 @@ async function run() {
   logger.success('Action completed successfully!', 'index#run')
 }
 
-run().catch(err => {
-  if (err instanceof Error) core.setFailed(err.message)
+run()
+  .then(() => nodeSDK.shutdown())
+  .catch(err => {
+    if (err instanceof Error) core.setFailed(err.message)
 
-  core.setFailed('An error occurred, check logs for more information.')
-})
+    core.setFailed('An error occurred, check logs for more information.')
+  })
