@@ -30964,6 +30964,14 @@ class GitHubUtil {
             logger.error(error);
         }
     }
+    /**
+     * Retrieves an array of all the branches in a repository that have not received a commit since
+     * the given `cutoffDate` and are flagged for deletion.
+     *
+     * @param cutoffDate The date to use as the cutoff for flagging branches.
+     *
+     * @returns An array of branches that have been flagged for deletion.
+     */
     async getFlaggedBranches(cutoffDate) {
         const flaggedBranches = [];
         try {
@@ -31003,35 +31011,34 @@ class GitHubUtil {
      * our primary mechanism for notifying the owners of the repository that a branch is set to be
      * deleted.
      *
-     * @param flaggedBranch The branch that has been flagged for deletion.
-     * @param cutoffDate The date that the issue will be open until before the branch is deleted.
+     * @param input An object of input values used to create the issue.
      *
      * @returns The response from the GitHub API when creating the issue.
      */
-    async createIssue({ branchName, lastCommit, repo }, cutoffDate) {
+    async createIssue({ branch, cutoffDate, labels }) {
         try {
             const newIssueBody = [
                 '# Stale Branch Deletion Notice',
                 '\n',
-                `The branch [\`${branchName}\`][0] has been flagged for deletion by the [O11y-Stale-Branch-POC Action][1] due to a lack of activity.`,
+                `The branch [\`${branch.branchName}\`][0] has been flagged for deletion by the [O11y-Stale-Branch-POC Action][1] due to a lack of activity.`,
                 '\n',
                 '## Further Details',
                 '\n',
                 `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
-                `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
-                `- Last commit by: ${lastCommit.commit.committer?.name || 'Unknown'} <${lastCommit.commit.committer?.email || 'Unknown'}>`,
-                `- Last commit on: ${dayjs_min_default()(lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
-                `- Last commit URL: ${lastCommit.html_url}`,
+                `- Branch URL: https://github.com/${branch.repo.owner}/${branch.repo.repo}/tree/${branch.branchName}`,
+                `- Last commit by: ${branch.lastCommit.commit.committer?.name || 'Unknown'} <${branch.lastCommit.commit.committer?.email || 'Unknown'}>`,
+                `- Last commit on: ${dayjs_min_default()(branch.lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
+                `- Last commit URL: ${branch.lastCommit.html_url}`,
                 '\n',
-                `[0]: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
+                `[0]: https://github.com/${branch.repo.owner}/${branch.repo.repo}/tree/${branch.branchName}`,
                 `[1]: https://github.com/liatrio/O11y-Stale-Branch-POC`,
             ];
             return this.gh.rest.issues.create({
-                owner: repo.owner,
-                repo: repo.repo,
-                title: getFlaggedBranchIssueTitle(branchName),
+                owner: branch.repo.owner,
+                repo: branch.repo.repo,
+                title: getFlaggedBranchIssueTitle(branch.branchName),
                 body: newIssueBody.join('\n'),
-                labels: ['stale-branch'],
+                labels,
             });
         }
         catch (error) {
@@ -31040,28 +31047,28 @@ class GitHubUtil {
         }
         return undefined;
     }
-    async closeIssue(issueNumber, { owner, repo }) {
+    /**
+     * Closes the issue with the given `issueNumber` in the given `repo`.
+     *
+     * @param issueNumber The number of the issue to close.
+     * @param repo The repository where the issue is located.
+     *
+     * @returns The response from the GitHub API when closing the issue.
+     */
+    async closeIssue({ issueNumber, repo, message }) {
         try {
-            // const closeRes = await this.gh.rest.issues.update({
-            //   owner: repo.owner,
-            //   repo: repo.repo,
-            //   issue_number: issueNumber,
-            //   state: 'closed',
-            // })
-            // logger.success(`Closed issue: ${issueNumber}`, 'GitHubUtil#closeIssue')
-            // return closeRes
             await this.gh.rest.issues.createComment({
-                body: 'Closing this issue.',
+                body: `${message || 'Closed by stale-branch-action'}`,
                 issue_number: issueNumber,
-                owner,
-                repo,
+                owner: repo.owner,
+                repo: repo.repo,
             });
             return this.gh.rest.issues.update({
                 issue_number: issueNumber,
-                body: 'Closing this issue, in the update statement.',
                 state: 'closed',
-                owner,
-                repo,
+                owner: repo.owner,
+                repo: repo.repo,
+                state_reason: 'completed',
             });
         }
         catch (error) {
@@ -31076,17 +31083,6 @@ class GitHubUtil {
      */
     async deleteBranch({ branchName, repo }) {
         try {
-            // await this.gh.rest.git.deleteRef({
-            //   owner: repo.owner,
-            //   repo: repo.repo,
-            //   ref: `heads/${branchName}`,
-            // })
-            // const res = await this.gh.request('DELETE /repos/{owner}/{repo}/git/refs/{ref}', {
-            //   owner: repo.owner,
-            //   repo: repo.repo,
-            //   ref: `heads/${branchName}`,
-            // })
-            // logger.success(`Deleted branch: ${branchName}`, 'GitHubUtil#deleteBranch')
             return this.gh.request('DELETE /repos/{owner}/{repo}/git/refs/{ref}', {
                 owner: repo.owner,
                 repo: repo.repo,
@@ -31106,33 +31102,41 @@ class GitHubUtil {
 
 
 /**
- * Gets the input value with the given name and converts it to an instance of {@link Dayjs}. This is
- * used on input values that are expected to be in the format of "<value> <unit>", such as
- * "30 days". The resulting `Dayjs` instance is the date that is the given number of units before
- * the current date.
- *
- * For example, providing `30 days` as the input value will return a `Dayjs` instance representing
- * the date 30 days ago.
+ * Creates an instance of `Dayjs` with the value of the input with the given name, in the format of
+ * `<value> <unit>`, and performs the given operation on the date. For example, if the input
+ * `stale-branch-age` has a value of `3 days` and the operation is `past`, the date will be 3 days
+ * in the past.
  *
  * @param inputName The name of the input to get the value for.
+ * @param direction The direction to manipulate the date.
  *
- * @returns An instance of `Dayjs` representing the input value.
+ * @returns A `Dayjs` instance with the date value.
  */
-function getInputAsDate(inputName) {
+function getInputAsDate(inputName, direction) {
     const inputValue = core.getInput(inputName).split(' ');
     if (inputValue.length !== 2) {
         core.setFailed(`Invalid ${inputName} input. Must be in the format of "<value> <unit>".`);
         throw new Error(`The ${inputName} input is in an invalid format.`);
     }
-    const number = Number(inputValue[0]);
-    const unit = inputValue[1];
-    return dayjs_min_default()().subtract(number, unit);
+    const inputNumber = Number(inputValue[0]);
+    const inputUnit = inputValue[1];
+    switch (direction) {
+        case 'future':
+            return dayjs_min_default()().add(inputNumber, inputUnit);
+        case 'past':
+            return dayjs_min_default()().subtract(inputNumber, inputUnit);
+    }
 }
+/**
+ * Gets the input values from the GitHub Action and returns them as an object.
+ *
+ * @returns An object containing the input values for the GitHub Action.
+ */
 function getActionsInput() {
-    const branchCutoffDate = getInputAsDate('stale-branch-age');
-    const issueCutoffDate = getInputAsDate('stale-branch-issue-age');
     const token = core.getInput('github-token');
-    return { branchCutoffDate, token, issueCutoffDate };
+    const branchCutoffDate = getInputAsDate('stale-branch-age', 'past');
+    const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'future');
+    return { branchCutoffDate, issueCutoffDate, token };
 }
 async function run() {
     const { branchCutoffDate, issueCutoffDate, token } = getActionsInput();
@@ -31144,13 +31148,11 @@ async function run() {
         const issue = await gh.findFlaggedBranchIssue(branch);
         if (issue) {
             core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`);
-            const creationDate = dayjs_min_default()(issue.created_at);
-            // Check if the issue was created after the issue cutoff date.
-            if (issueCutoffDate.isAfter(creationDate)) {
-                // Delete the branch.
+            // Check if the issue has been open longer than the required amount of time.
+            if (dayjs_min_default()().isAfter(issueCutoffDate)) {
                 const delRes = await gh.deleteBranch(branch);
                 logger.success(`Deleted flagged branch: ${branch.branchName}`, 'index#run');
-                const issueDelRes = await gh.closeIssue(issue.number, branch.repo);
+                const issueDelRes = await gh.closeIssue({ issueNumber: issue.number, repo: branch.repo });
                 logger.success(`Closed issue for flagged branch: ${issueDelRes?.data?.title || 'Unknown'}`, 'index#run');
                 logger.debug('Branch deletion response:');
                 logger.success(JSON.stringify(delRes?.data, null, 2), 'index#run');
@@ -31163,7 +31165,7 @@ async function run() {
         }
         else {
             core.debug('No deletion issue found for flagged branch.');
-            const newIssue = await gh.createIssue(branch, issueCutoffDate);
+            const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate });
             logger.success(`Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`, 'index#run');
             logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run');
         }
