@@ -191,6 +191,14 @@ export class GitHubUtil {
     }
   }
 
+  /**
+   * Retrieves an array of all the branches in a repository that have not received a commit since
+   * the given `cutoffDate` and are flagged for deletion.
+   *
+   * @param cutoffDate The date to use as the cutoff for flagging branches.
+   *
+   * @returns An array of branches that have been flagged for deletion.
+   */
   public async getFlaggedBranches(cutoffDate: Dayjs) {
     const flaggedBranches: FlaggedBranch[] = []
 
