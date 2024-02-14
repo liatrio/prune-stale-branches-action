@@ -3,7 +3,7 @@ import { GitHub } from '@actions/github/lib/utils.js'
 import { composePaginateRest, paginateRest } from '@octokit/plugin-paginate-rest'
 import Day, { Dayjs } from 'dayjs'
 import { logger } from './Logger.js'
-import { BranchAndCommit, FlaggedBranch } from './Types.js'
+import { BranchAndCommit, CloseIssueInput, CreateIssueInput, FlaggedBranch } from './Types.js'
 
 function getFlaggedBranchIssueTitle(branchName: string) {
   return `The branch \`${branchName}\` has been flagged for deletion`
@@ -265,36 +265,35 @@ export class GitHubUtil {
    * our primary mechanism for notifying the owners of the repository that a branch is set to be
    * deleted.
    *
-   * @param flaggedBranch The branch that has been flagged for deletion.
-   * @param cutoffDate The date that the issue will be open until before the branch is deleted.
+   * @param input An object of input values used to create the issue.
    *
    * @returns The response from the GitHub API when creating the issue.
    */
-  public async createIssue({ branchName, lastCommit, repo }: FlaggedBranch, cutoffDate: Dayjs) {
+  public async createIssue({ branch, cutoffDate, labels }: CreateIssueInput) {
     try {
       const newIssueBody: string[] = [
         '# Stale Branch Deletion Notice',
         '\n',
-        `The branch [\`${branchName}\`][0] has been flagged for deletion by the [O11y-Stale-Branch-POC Action][1] due to a lack of activity.`,
+        `The branch [\`${branch.branchName}\`][0] has been flagged for deletion by the [O11y-Stale-Branch-POC Action][1] due to a lack of activity.`,
         '\n',
         '## Further Details',
         '\n',
         `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
-        `- Branch URL: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
-        `- Last commit by: ${lastCommit.commit.committer?.name || 'Unknown'} <${lastCommit.commit.committer?.email || 'Unknown'}>`,
-        `- Last commit on: ${Day(lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
-        `- Last commit URL: ${lastCommit.html_url}`,
+        `- Branch URL: https://github.com/${branch.repo.owner}/${branch.repo.repo}/tree/${branch.branchName}`,
+        `- Last commit by: ${branch.lastCommit.commit.committer?.name || 'Unknown'} <${branch.lastCommit.commit.committer?.email || 'Unknown'}>`,
+        `- Last commit on: ${Day(branch.lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
+        `- Last commit URL: ${branch.lastCommit.html_url}`,
         '\n',
-        `[0]: https://github.com/${repo.owner}/${repo.repo}/tree/${branchName}`,
+        `[0]: https://github.com/${branch.repo.owner}/${branch.repo.repo}/tree/${branch.branchName}`,
         `[1]: https://github.com/liatrio/O11y-Stale-Branch-POC`,
       ]
 
       return this.gh.rest.issues.create({
-        owner: repo.owner,
-        repo: repo.repo,
-        title: getFlaggedBranchIssueTitle(branchName),
+        owner: branch.repo.owner,
+        repo: branch.repo.repo,
+        title: getFlaggedBranchIssueTitle(branch.branchName),
         body: newIssueBody.join('\n'),
-        labels: ['stale-branch'],
+        labels,
       })
     } catch (error) {
       logger.error('Error caught when creating issue:', 'GitHubUtil#createIssue')
@@ -304,32 +303,29 @@ export class GitHubUtil {
     return undefined
   }
 
-  public async closeIssue(issueNumber: number, { owner, repo }: typeof context.repo) {
+  /**
+   * Closes the issue with the given `issueNumber` in the given `repo`.
+   *
+   * @param issueNumber The number of the issue to close.
+   * @param repo The repository where the issue is located.
+   *
+   * @returns The response from the GitHub API when closing the issue.
+   */
+  public async closeIssue({ issueNumber, repo, message }: CloseIssueInput) {
     try {
-      // const closeRes = await this.gh.rest.issues.update({
-      //   owner: repo.owner,
-      //   repo: repo.repo,
-      //   issue_number: issueNumber,
-      //   state: 'closed',
-      // })
-
-      // logger.success(`Closed issue: ${issueNumber}`, 'GitHubUtil#closeIssue')
-
-      // return closeRes
-
       await this.gh.rest.issues.createComment({
-        body: 'Closing this issue.',
+        body: `${message || 'Closed by stale-branch-action'}`,
         issue_number: issueNumber,
-        owner,
-        repo,
+        owner: repo.owner,
+        repo: repo.repo,
       })
 
       return this.gh.rest.issues.update({
         issue_number: issueNumber,
-        body: 'Closing this issue, in the update statement.',
         state: 'closed',
-        owner,
-        repo,
+        owner: repo.owner,
+        repo: repo.repo,
+        state_reason: 'completed',
       })
     } catch (error) {
       logger.error('Error caught when closing issue:', 'GitHubUtil#closeIssue')
@@ -344,19 +340,6 @@ export class GitHubUtil {
    */
   public async deleteBranch({ branchName, repo }: FlaggedBranch) {
     try {
-      // await this.gh.rest.git.deleteRef({
-      //   owner: repo.owner,
-      //   repo: repo.repo,
-      //   ref: `heads/${branchName}`,
-      // })
-      // const res = await this.gh.request('DELETE /repos/{owner}/{repo}/git/refs/{ref}', {
-      //   owner: repo.owner,
-      //   repo: repo.repo,
-      //   ref: `heads/${branchName}`,
-      // })
-
-      // logger.success(`Deleted branch: ${branchName}`, 'GitHubUtil#deleteBranch')
-
       return this.gh.request('DELETE /repos/{owner}/{repo}/git/refs/{ref}', {
         owner: repo.owner,
         repo: repo.repo,

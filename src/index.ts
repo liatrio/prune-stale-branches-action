@@ -65,16 +65,13 @@ async function run() {
     if (issue) {
       core.debug(`Found deletion issue: ${issue.title}; ${issue.html_url}`)
 
-      const creationDate = Day(issue.created_at)
-
-      // Check if the issue was created after the issue cutoff date.
-      if (issueCutoffDate.isAfter(creationDate)) {
-        // Delete the branch.
+      // Check if the issue has been open longer than the required amount of time.
+      if (Day().isAfter(issueCutoffDate)) {
         const delRes = await gh.deleteBranch(branch)
 
         logger.success(`Deleted flagged branch: ${branch.branchName}`, 'index#run')
 
-        const issueDelRes = await gh.closeIssue(issue.number, branch.repo)
+        const issueDelRes = await gh.closeIssue({ issueNumber: issue.number, repo: branch.repo })
 
         logger.success(
           `Closed issue for flagged branch: ${issueDelRes?.data?.title || 'Unknown'}`,
@@ -95,7 +92,7 @@ async function run() {
     } else {
       core.debug('No deletion issue found for flagged branch.')
 
-      const newIssue = await gh.createIssue(branch, issueCutoffDate)
+      const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate })
 
       logger.success(
         `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,

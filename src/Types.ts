@@ -28,14 +28,53 @@ export type ActionsInput = {
 /** An object containing the relevant data for a branch and its last commit. */
 export type BranchAndCommit = {
   /** The details available for a branch. */
-  branch: Endpoints['GET /repos/{owner}/{repo}/branches']['response']['data'][number]
+  branch: BranchResponse
 
   /** The last commit made to the branch. */
-  commit: Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']
+  commit: CommitResponse
 }
 
+/** The response from the GitHub API when fetching a branch. */
+export type BranchResponse =
+  Endpoints['GET /repos/{owner}/{repo}/branches']['response']['data'][number]
+
+/** An object containing the details needed to close an issue. */
+export type CloseIssueInput = {
+  /** The issue number to close. */
+  issueNumber: number
+
+  /** The repo where the issue lives. */
+  repo: typeof context.repo
+
+  /**
+   * An optional string to use as the closing message. If none is provided, the default message of
+   * "Closed by stale-branch-action" will be used.
+   */
+  message?: string
+}
+
+/** The response from the GitHub API when fetching a commit. */
 export type CommitResponse =
   Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']
+
+/**
+ * An object containing the details needed to create a new issue that a branch has been flagged for
+ * deletion.
+ */
+export type CreateIssueInput = {
+  /** The branch that has been flagged for deletion. */
+  branch: FlaggedBranch
+
+  /**
+   * The date that the issue will need to be open by for the branch to be deleted. For example, if
+   * the issue is not closed by this date, then the branch will be deleted the next time the action
+   * runs.
+   */
+  cutoffDate: Dayjs
+
+  /** An optional array of labels to assign to the issue. Default: `['stale-branch']`. */
+  labels?: string[]
+}
 
 /** An object containing the data needed to create a `Dayjs` instance. */
 export type DateInputValues = {
