@@ -40,7 +40,7 @@ if [[ -n $(git status -s) ]]; then
 
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         # Commit the changes
-        git add dist/index.js
+        git add dist/
         git commit -m "chore: added latest packaged script"
         echo -e "${GREEN}Changes committed${OFF}"
     else
