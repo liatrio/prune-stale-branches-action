@@ -1,22 +1,49 @@
+// import { NodeSDK } from '@opentelemetry/sdk-node'
+// import { Resource } from '@opentelemetry/resources'
+// import { ConsoleMetricExporter, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
+// import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
+// import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node'
+// import { WebTracerProvider } from '@opentelemetry/sdk-trace-web'
+// import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
+// import pkg from '../package.json'
+
+// const resource = Resource.default().merge(
+//   new Resource({
+//     [SemanticResourceAttributes.SERVICE_NAME]: pkg.name,
+//     [SemanticResourceAttributes.SERVICE_VERSION]: pkg.version,
+//   }),
+// )
+
+// const provider = new WebTracerProvider({
+//   resource: resource,
+// })
+// const exporter = new ConsoleSpanExporter()
+// const processor = new BatchSpanProcessor(exporter)
+
+// provider.addSpanProcessor(processor)
+
+// provider.register()
+
+// const sdk = new NodeSDK({
+//   resource: resource,
+//   traceExporter: exporter,
+//   metricReader: new PeriodicExportingMetricReader({
+//     exporter: new ConsoleMetricExporter(),
+//   }),
+// })
+
+// sdk.start()
 import * as core from '@actions/core'
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc'
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
-import { NodeSDK } from '@opentelemetry/sdk-node'
-import Day, { Dayjs, ManipulateType } from 'dayjs'
+// import Day, { Dayjs, ManipulateType } from 'dayjs'
+import Day from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
-import { ActionsInput } from './Types.js'
+// import './instrumentation.js'
+// import { ActionsInput } from './Types.js'
+// import { trace } from '@opentelemetry/api'
+// import pkg from '../package.json'
 
-export const nodeSDK = new NodeSDK({
-  traceExporter: new OTLPTraceExporter(),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter(),
-  }),
-  instrumentations: [getNodeAutoInstrumentations()],
-  serviceName: 'stale-branch-cleaner',
-})
+// const tracer = trace.getTracer(pkg.name, pkg.version)
 
 /**
  * Creates an instance of `Dayjs` with the value of the input with the given name, in the format of
@@ -29,44 +56,44 @@ export const nodeSDK = new NodeSDK({
  *
  * @returns A `Dayjs` instance with the date value.
  */
-function getInputAsDate(inputName: string, direction: 'future' | 'past'): Dayjs {
-  const inputValue = core.getInput(inputName).split(' ')
+// function getInputAsDate(inputName: string, direction: 'future' | 'past'): Dayjs {
+//   const inputValue = core.getInput(inputName).split(' ')
 
-  if (inputValue.length !== 2) {
-    core.setFailed(`Invalid ${inputName} input. Must be in the format of "<value> <unit>".`)
+//   if (inputValue.length !== 2) {
+//     core.setFailed(`Invalid ${inputName} input. Must be in the format of "<value> <unit>".`)
 
-    throw new Error(`The ${inputName} input is in an invalid format.`)
-  }
+//     throw new Error(`The ${inputName} input is in an invalid format.`)
+//   }
 
-  const inputNumber = Number(inputValue[0])
-  const inputUnit = inputValue[1] as ManipulateType
+//   const inputNumber = Number(inputValue[0])
+//   const inputUnit = inputValue[1] as ManipulateType
 
-  switch (direction) {
-    case 'future':
-      return Day().add(inputNumber, inputUnit)
-    case 'past':
-      return Day().subtract(inputNumber, inputUnit)
-  }
-}
+//   switch (direction) {
+//     case 'future':
+//       return Day().add(inputNumber, inputUnit)
+//     case 'past':
+//       return Day().subtract(inputNumber, inputUnit)
+//   }
+// }
 
 /**
  * Gets the input values from the GitHub Action and returns them as an object.
  *
  * @returns An object containing the input values for the GitHub Action.
  */
-function getActionsInput(): ActionsInput {
-  const token = core.getInput('github-token')
-  const branchCutoffDate = getInputAsDate('stale-branch-age', 'past')
-  const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'future')
+// function getActionsInput(): ActionsInput {
+//   const token = core.getInput('github-token')
+//   const branchCutoffDate = getInputAsDate('stale-branch-age', 'past')
+//   const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'future')
 
-  return { branchCutoffDate, issueCutoffDate, token }
-}
+//   return { branchCutoffDate, issueCutoffDate, token }
+// }
 
 async function run() {
-  // Kick off OTEL instrumentation.
-  nodeSDK.start()
-
-  const { branchCutoffDate, issueCutoffDate, token } = getActionsInput()
+  // const { branchCutoffDate, issueCutoffDate, token } = getActionsInput()
+  const branchCutoffDate = Day().subtract(3, 'months')
+  const issueCutoffDate = Day().subtract(7, 'days')
+  const token = process.env.GITHUB_TOKEN!
 
   const gh = new GitHubUtil(token)
 
@@ -109,23 +136,21 @@ async function run() {
     } else {
       core.debug('No deletion issue found for flagged branch.')
 
-      const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate })
+      // const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate })
 
-      logger.success(
-        `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,
-        'index#run',
-      )
-      logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run')
+      // logger.success(
+      //   `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,
+      //   'index#run',
+      // )
+      // logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run')
     }
   }
 
   logger.success('Action completed successfully!', 'index#run')
 }
 
-run()
-  .then(() => nodeSDK.shutdown())
-  .catch(err => {
-    if (err instanceof Error) core.setFailed(err.message)
+run().catch(err => {
+  if (err instanceof Error) core.setFailed(err.message)
 
-    core.setFailed('An error occurred, check logs for more information.')
-  })
+  core.setFailed('An error occurred, check logs for more information.')
+})
