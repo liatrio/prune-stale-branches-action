@@ -1,22 +1,8 @@
 import * as core from '@actions/core'
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc'
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
-import { NodeSDK } from '@opentelemetry/sdk-node'
 import Day, { Dayjs, ManipulateType } from 'dayjs'
 import { GitHubUtil } from './GitHubUtil.js'
 import { logger } from './Logger.js'
 import { ActionsInput } from './Types.js'
-
-export const nodeSDK = new NodeSDK({
-  traceExporter: new OTLPTraceExporter(),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter(),
-  }),
-  instrumentations: [getNodeAutoInstrumentations()],
-  serviceName: 'stale-branch-cleaner',
-})
 
 /**
  * Creates an instance of `Dayjs` with the value of the input with the given name, in the format of
@@ -63,9 +49,6 @@ function getActionsInput(): ActionsInput {
 }
 
 async function run() {
-  // Kick off OTEL instrumentation.
-  nodeSDK.start()
-
   const { branchCutoffDate, issueCutoffDate, token } = getActionsInput()
 
   const gh = new GitHubUtil(token)
@@ -123,7 +106,6 @@ async function run() {
 }
 
 run()
-  .then(() => nodeSDK.shutdown())
   .catch(err => {
     if (err instanceof Error) core.setFailed(err.message)
 
