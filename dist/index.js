@@ -31135,7 +31135,7 @@ function getInputAsDate(inputName, direction) {
 function getActionsInput() {
     const token = core.getInput('github-token');
     const branchCutoffDate = getInputAsDate('stale-branch-age', 'past');
-    const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'future');
+    const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'past');
     return { branchCutoffDate, issueCutoffDate, token };
 }
 async function run() {
