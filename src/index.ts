@@ -43,7 +43,7 @@ function getInputAsDate(inputName: string, direction: 'future' | 'past'): Dayjs 
 function getActionsInput(): ActionsInput {
   const token = core.getInput('github-token')
   const branchCutoffDate = getInputAsDate('stale-branch-age', 'past')
-  const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'future')
+  const issueCutoffDate = getInputAsDate('stale-branch-issue-age', 'past')
 
   return { branchCutoffDate, issueCutoffDate, token }
 }
