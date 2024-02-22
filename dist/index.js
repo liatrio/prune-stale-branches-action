@@ -31165,7 +31165,7 @@ async function run() {
         }
         else {
             core.debug('No deletion issue found for flagged branch.');
-            const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate });
+            const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate, labels: ['stale-branch'] });
             logger.success(`Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`, 'index#run');
             logger.success(`You can view the issue at: ${newIssue?.data?.html_url}`, 'index#run');
         }
