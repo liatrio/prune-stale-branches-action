@@ -1,5 +1,5 @@
 ---
-name: Build and Test
+name: Semantic Release
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
   go-semantic-release:
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on:
-      group: bigger
+      - ubuntu-latest
     permissions:
       contents: write
     steps:
