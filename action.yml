@@ -1,9 +1,5 @@
 name: 'Cleanup Stale Branches'
-description: |
-  This action is a POC for Liatrio's Project O11y. It will check a repo for any
-  stale branches and create an issue for each one found that's flagged for
-  deletion. The amount of time until a branch is considered stale is
-  configurable via the `stale-branch-age` input.
+description: A GitHub Action that can be used to clean up stale/unused branches in a repository.
 author: 'Liatrio'
 branding:
   icon: 'heart'
