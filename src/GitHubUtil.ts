@@ -191,6 +191,22 @@ export class GitHubUtil {
     }
   }
 
+  public async getDefaultBranch(repo?: typeof context.repo) {
+    try {
+      const { data } = await this.gh.rest.repos.get({
+        owner: repo?.owner || context.repo.owner,
+        repo: repo?.repo || context.repo.repo,
+      })
+
+      return data.default_branch
+    } catch (error) {
+      logger.error('Error caught when getting default branch:', 'GitHubUtil#getDefaultBranch')
+      logger.error(error)
+
+      return undefined
+    }
+  }
+
   /**
    * Retrieves an array of all the branches in a repository that have not received a commit since
    * the given `cutoffDate` and are flagged for deletion.
@@ -223,6 +239,13 @@ export class GitHubUtil {
               `Skipping protected branch: ${branch.name}`,
               'GitHubUtil#getFlaggedBranches',
             )
+
+            continue
+          }
+
+          // Verify the branch is not the default branch.
+          if (branch.name === (await this.getDefaultBranch())) {
+            logger.info(`Skipping default branch: ${branch.name}`, 'GitHubUtil#getFlaggedBranches')
 
             continue
           }
@@ -280,8 +303,12 @@ export class GitHubUtil {
         '\n',
         `- Will be deleted after: ${cutoffDate.format(StandardDateFormat)}.`,
         `- Branch URL: https://github.com/${branch.repo.owner}/${branch.repo.repo}/tree/${branch.branchName}`,
-        `- Last commit by: ${branch.lastCommit.commit.committer?.name || 'Unknown'} <${branch.lastCommit.commit.committer?.email || 'Unknown'}>`,
-        `- Last commit on: ${Day(branch.lastCommit.commit.committer?.date).format(StandardDateFormat)}.`,
+        `- Last commit by: ${branch.lastCommit.commit.committer?.name || 'Unknown'} <${
+          branch.lastCommit.commit.committer?.email || 'Unknown'
+        }>`,
+        `- Last commit on: ${Day(branch.lastCommit.commit.committer?.date).format(
+          StandardDateFormat,
+        )}.`,
         `- Last commit URL: ${branch.lastCommit.html_url}`,
         '\n',
         `[0]: https://github.com/${branch.repo.owner}/${branch.repo.repo}/tree/${branch.branchName}`,
