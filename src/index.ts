@@ -92,7 +92,11 @@ async function run() {
     } else {
       core.debug('No deletion issue found for flagged branch.')
 
-      const newIssue = await gh.createIssue({ branch, cutoffDate: issueCutoffDate, labels: ['stale-branch'] })
+      const newIssue = await gh.createIssue({
+        branch,
+        cutoffDate: issueCutoffDate,
+        labels: ['stale-branch'],
+      })
 
       logger.success(
         `Created issue for flagged branch: ${newIssue?.data?.title || 'Unknown'}`,
@@ -105,9 +109,8 @@ async function run() {
   logger.success('Action completed successfully!', 'index#run')
 }
 
-run()
-  .catch(err => {
-    if (err instanceof Error) core.setFailed(err.message)
+run().catch(err => {
+  if (err instanceof Error) core.setFailed(err.message)
 
-    core.setFailed('An error occurred, check logs for more information.')
-  })
+  core.setFailed('An error occurred, check logs for more information.')
+})

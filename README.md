@@ -4,7 +4,6 @@ This repository is home to a GitHub Action that can be used to clean up stale/un
 Cleaning up stale branches reduces overall cognitive overhead. This falls directly in line with the
 Engineering Defaults defined in [openo11y.dev][0].
 
-
 ## Sample Usage
 
 To use this action in your repository/repositories, simply add a workflow that'll call this action and provide the necessary inputs/config values.
