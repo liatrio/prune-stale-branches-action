@@ -1,5 +1,5 @@
 name: Prune Stale Branches
-description: A GitHub Action that can be used to cleanup/prune stale/unused branches in a repository.
+description: A GitHub Action that can be used to prune/cleanup stale and/or unused branches in a repository.
 author: Liatrio
 branding:
   icon: heart
