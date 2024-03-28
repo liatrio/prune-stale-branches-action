@@ -1,36 +1,33 @@
-# Cleanup Stale Branches GitHub Action
+# Prune Stale Branches GitHub Action
 
-This repository is home to a GitHub Action that can be used to clean up stale/unused branches in a repository.
-Cleaning up stale branches reduces overall cognitive overhead. This falls directly in line with the
-Engineering Defaults defined in [openo11y.dev][0].
+This repository is home to a GitHub Action that can be used to prune/cleanup stale/unused branches in a repository.
+
+Pruning/cleaning up stale branches reduces overall cognitive overhead. This falls directly in line with the Engineering Defaults defined in [openo11y.dev][0].
 
 ## Sample Usage
 
 To use this action in your repository/repositories, simply add a workflow that'll call this action and provide the necessary inputs/config values.
 
-For example, the following snippet is a workflow that will run the Cleanup Stale Branches Action once every 6 hours or whenever manually triggered:
+For example, the following snippet is a workflow that will run the Prune Stale Branches Action once day at midnight (`cron: 0 0 * * *`) or whenever manually triggered (`workflow_dispatch`):
 
 ```yaml
-name: Check for Stale Branches
+name: Find & Prune Stale Branches
 
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: 0 0 * * *
 
 jobs:
-  find-stale-branches:
+  prune-stale-branches:
     runs-on: ubuntu-latest
-    name: Find And Process Stale Branches
-
     steps:
-      - name: Run Stale Branch Action
-        id: stale-branch-poc
-        uses: liatrio/o11y-stale-branch-poc@v0.4.2
+      - uses: liatrio/github-action-cleanup-stale-branches@v0.6.0
+        name: Run Prune Stale Branches Action
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-branch-age: '3 months'
-          stale-branch-issue-age: '7 days'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          stale-branch-age: 1 month
+          stale-branch-issue-age: 7 days
 ```
 
 ## Reason for Creation
