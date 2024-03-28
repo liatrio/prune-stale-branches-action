@@ -1,13 +1,13 @@
 name: Prune Stale Branches
 description: A GitHub Action that can be used to cleanup/prune stale/unused branches in a repository.
-author: 'Liatrio'
+author: Liatrio
 branding:
-  icon: 'heart'
-  color: 'green'
+  icon: heart
+  color: green
 
 inputs:
   github-token:
-    description: 'The API token used to authenticate with GitHub.'
+    description: The API token used to authenticate with GitHub.
     required: true
 
   stale-branch-age:
@@ -15,14 +15,14 @@ inputs:
       The amount and unit of time ([value] [unit]) until a branch is considered
       stale and flagged for deletion. The default is "30 days".
     required: true
-    default: '30 days'
+    default: 30 days
 
   stale-branch-issue-age:
     description: |
       The amount and unit of time ([value] [unit]) to wait after creating a
       deletion issue before actually deleting the branch. Default is "7 days".
     required: true
-    default: '7 days'
+    default: 7 days
 
 runs:
   using: node20
