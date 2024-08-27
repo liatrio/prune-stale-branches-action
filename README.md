@@ -22,10 +22,10 @@ jobs:
   prune-stale-branches:
     runs-on: ubuntu-latest
     steps:
-      - uses: liatrio/github-action-cleanup-stale-branches@v0.6.0
+      - uses: liatrio/prune-stale-branches-action@v0.6.0
         name: Run Prune Stale Branches Action
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           stale-branch-age: 1 month
           stale-branch-issue-age: 7 days
 ```
